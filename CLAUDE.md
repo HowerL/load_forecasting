@@ -46,11 +46,13 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 - **VMD**: Variational Mode Decomposition for signal decomposition into IMFs
 - **DTW**: Dynamic Time Warping distance for sequence similarity measurement
 - **Optimal K Selection**: Based on center frequency stability
-- **Weighted Similarity**: Low-frequency IMFs weighted higher (8:4:2:1:1 for K=5)
+- **Weighted Similarity**: Weights computed based on center frequency (inversely proportional), ensuring low-frequency IMFs have higher weights
 - **Standardization**: Each building's load data is standardized independently before VMD analysis to focus on pattern similarity rather than magnitude differences
+- **Transfer Direction**: Building with more data becomes source domain (for pre-training), building with less data becomes target domain (for fine-tuning)
 
 **Core Functions (defined in `similarity_analysis.ipynb`):**
 - `determine_optimal_k()` - Determine optimal VMD decomposition level K
+- `compute_imf_weights()` - Calculate weights based on center frequency (weight ∝ 1 / f^(1/decay_factor))
 - `compute_vmd_dtw_similarity()` - Core computation: VMD + DTW + similarity
 - `_compute_pair_similarity_task()` - Parallel task wrapper for ThreadPoolExecutor
 
@@ -152,10 +154,19 @@ Common functions extracted to `src/` module:
 - `models/transfer_*.pt` - Transfer learning models
 
 ### Generated Files
-- `data/相似性分析_完整结果.json` - Complete analysis results (K, similarity, DTW distances, center frequencies, weights)
-- `data/相似性分析汇总.csv` - Building pair summary (source, target, K, weighted DTW, original DTW, similarity)
-- `data/原始负荷对比.png` - Source vs target load comparison
-- `data/IMF1对比.png` ~ `data/IMF{n}对比.png` - IMF component comparisons
+
+**Data Files:**
+- `data/相似性分析完整结果.json` - Complete analysis results (K, similarity, DTW distances, center frequencies, weights)
+- `data/相似性分析汇总.csv` - Building pair summary (pair, source, target, K, weighted DTW, original DTW, similarity)
+
+**Figures (in `data/figures/`):**
+- `原始负荷对比.png` - Source vs target load comparison
+- `IMF1对比.png` ~ `IMF{n}对比.png` - IMF component comparisons
+- `所有建筑小时负荷曲线.png` - All buildings hourly load curves
+- `源域目标域负荷对比.png` - Source vs target domain load comparison
+- `{建筑名}_月度负荷曲线.png` - Monthly load curves for each building
+- `{建筑名}_特征相关性.png` - Feature correlation analysis for each building
+- `迁移学习性能对比.png` - Transfer learning performance comparison
 
 ## Feature Engineering
 

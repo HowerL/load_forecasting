@@ -44,6 +44,7 @@ from .config import (
     BUILDINGS_DIR,
     SCALER_DIR,
     MODEL_DIR,
+    FIGURES_DIR,
     # 建筑
     BUILDINGS,
     SOURCE_BUILDING,
@@ -92,6 +93,7 @@ __all__ = [
     'BUILDINGS_DIR',
     'SCALER_DIR',
     'MODEL_DIR',
+    'FIGURES_DIR',
     'BUILDINGS',
     'SOURCE_BUILDING',
     'TARGET_BUILDING',
