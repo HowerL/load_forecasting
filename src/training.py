@@ -61,12 +61,14 @@ class EarlyStopping:
         self.restore_best_weights = restore_best_weights
         self.best_weights = None
         self.best_loss = float('inf')
+        self.best_epoch = -1
         self.counter = 0
         self.early_stop = False
 
-    def __call__(self, val_loss: float, model) -> bool:
+    def __call__(self, val_loss: float, model, epoch: int = -1) -> bool:
         if val_loss < self.best_loss - self.min_delta:
             self.best_loss = val_loss
+            self.best_epoch = epoch
             self.counter = 0
             if self.restore_best_weights:
                 self.best_weights = {k: v.clone() for k, v in model.state_dict().items()}
@@ -81,6 +83,14 @@ class EarlyStopping:
         # 恢复最佳权重
         if self.best_weights is not None:
             model.load_state_dict(self.best_weights)
+
+    def get_best_info(self) -> dict:
+        """返回最佳训练信息"""
+        return {
+            'best_loss': self.best_loss,
+            'best_epoch': self.best_epoch,
+            'best_weights': self.best_weights
+        }
 
 
 def run_epoch(model, dataloader, criterion, device, optimizer=None) -> float:

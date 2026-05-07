@@ -33,14 +33,14 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 ## Key Architecture
 
 ### LSTM Model
-- **Model**: LSTM(128, selu) + Dense(1)
+- **Model**: LSTM(128) + [LeakyReLU (optional)] + Dense(1)
 - **Lookback**: 24 hours of historical data
 - **Horizon**: 1 hour ahead prediction
 - **Data**: Sliding window with 1-hour continuity check
 - **Loss**: MAE (L1Loss)
 - **Evaluation**: MAE, RMSE, MAPE, R² on original kWh scale
 - **Callbacks**: EarlyStopping(patience=5), ReduceLROnPlateau
-- **Regularization**: weight_decay=1e-3 (Adam optimizer)
+- **Regularization**: weight_decay=1e-4 (Adam optimizer)
 
 ### VMD-DTW Similarity Analysis
 - **VMD**: Variational Mode Decomposition for signal decomposition into IMFs

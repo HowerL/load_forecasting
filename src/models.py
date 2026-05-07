@@ -5,10 +5,11 @@ import torch.nn as nn
 
 
 class LSTMPredictor(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int = 128):
+    def __init__(self, input_size: int, hidden_size: int = 128, use_activation: bool = False):
         super(LSTMPredictor, self).__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
-        self.activation = nn.SELU()
+        self.use_activation = use_activation
+        self.activation = nn.LeakyReLU(0.1) if use_activation else None
         self.fc = nn.Linear(hidden_size, 1)
 
     def forward(self, x):
@@ -16,7 +17,8 @@ class LSTMPredictor(nn.Module):
         lstm_out, (h_n, c_n) = self.lstm(x)
         # 取最后一个时间步的输出
         out = lstm_out[:, -1, :]
-        out = self.activation(out)
+        if self.use_activation:
+            out = self.activation(out)
         out = self.fc(out)
         return out
 
@@ -27,7 +29,7 @@ class FeatureExtractorRegressor(nn.Module):
 
     将预训练的LSTM作为固定特征提取器，训练新的回归层。
     """
-    def __init__(self, pretrained_model: LSTMPredictor, feature_dim: int = 128):
+    def __init__(self, pretrained_model: LSTMPredictor, feature_dim: int = 128, use_activation: bool = False):
         super(FeatureExtractorRegressor, self).__init__()
 
         # 加载预训练的LSTM
@@ -45,9 +47,10 @@ class FeatureExtractorRegressor(nn.Module):
             param.requires_grad = False
 
         # 新的回归层
+        self.use_activation = use_activation
+        self.activation = nn.LeakyReLU(0.1) if use_activation else None
         self.fc1 = nn.Linear(feature_dim, feature_dim // 2)
         self.fc2 = nn.Linear(feature_dim // 2, 1)
-        self.activation = nn.SELU()
 
     def forward(self, x):
         # 使用冻结的LSTM提取特征
@@ -55,8 +58,8 @@ class FeatureExtractorRegressor(nn.Module):
         features = lstm_out[:, -1, :]
 
         # 新的回归层
-        out = self.activation(features)
-        out = self.fc1(out)
-        out = self.activation(out)
+        out = self.fc1(features)
+        if self.use_activation:
+            out = self.activation(out)
         out = self.fc2(out)
         return out
