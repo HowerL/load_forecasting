@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **power load forecasting** project using LSTM neural networks with **transfer learning**. The project processes electricity load data with weather and calendar features to predict future power consumption. It includes a **source domain** (data-rich building for pre-training) and a **target domain** (small-sample building for transfer learning).
 
+我的课题是"基于迁移学习的校园建筑用能负荷预测研究"，这个课题需要依次经过以下处理：数据预处理（异常值检测、缺失值填充、特征工程等）->相似性分析后选取相似性最佳的建筑作为源域->进行数据集分割与标准化->迁移学习。我手上有一些校园建筑逐小时的电力负荷数据集，我需要对其中一栋的指定某段时间作为研究用的"小样本数据"目标域，从其他建筑丰富的数据中选取相似度最高的作为源域来迁移。
+
 ## Data Pipeline
 
 The processing flow is:
