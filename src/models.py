@@ -25,22 +25,15 @@ class LSTMPredictor(nn.Module):
 
 class FeatureExtractorRegressor(nn.Module):
     """
-    特征提取器 + 新回归层（迁移学习策略3）
+    冻结特征提取器（迁移学习策略3）
 
     将预训练的LSTM作为固定特征提取器，训练新的回归层。
     """
     def __init__(self, pretrained_model: LSTMPredictor, feature_dim: int = 128, use_activation: bool = False):
         super(FeatureExtractorRegressor, self).__init__()
 
-        # 加载预训练的LSTM
-        self.lstm = nn.LSTM(
-            pretrained_model.lstm.input_size,
-            pretrained_model.lstm.hidden_size,
-            batch_first=True
-        )
-
-        # 加载预训练权重
-        self.lstm.load_state_dict(pretrained_model.lstm.state_dict())
+        # 直接引用预训练的LSTM
+        self.lstm = pretrained_model.lstm
 
         # 冻结LSTM
         for param in self.lstm.parameters():

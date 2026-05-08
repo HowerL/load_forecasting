@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import joblib
 
-from .config import TARGET_COL
+from .config import TARGET_COL, TIME_COL
 
 TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
@@ -63,8 +63,7 @@ def prepare_target_domain(
     准备目标域数据（选取小样本时间段后分割）
     仅标准化负荷（天气已在预处理阶段标准化）。
     """
-    time_col = 'timestamp'
-    mask = (df[time_col] >= sample_start) & (df[time_col] < sample_end)
+    mask = (df[TIME_COL] >= sample_start) & (df[TIME_COL] < sample_end)
     df_sample = df[mask].reset_index(drop=True)
 
     n = len(df_sample)

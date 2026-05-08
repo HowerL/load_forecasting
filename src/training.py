@@ -55,7 +55,7 @@ class EarlyStopping:
     早停回调
     当验证损失连续patience个epoch没有改善时停止训练
     """
-    def __init__(self, patience: int = 8, min_delta: float = 0, restore_best_weights: bool = True):
+    def __init__(self, patience: int = 5, min_delta: float = 0, restore_best_weights: bool = True):
         self.patience = patience
         self.min_delta = min_delta
         self.restore_best_weights = restore_best_weights
@@ -107,7 +107,10 @@ def run_epoch(model, dataloader, criterion, device, optimizer=None) -> float:
     Returns:
         平均损失
     """
-    model.train() if optimizer else model.eval()
+    if optimizer:
+        model.train()
+    else:
+        model.eval()
     total_loss = 0
 
     context = torch.no_grad() if optimizer is None else nullcontext()

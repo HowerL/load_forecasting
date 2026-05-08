@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**重要：本文件仅记录项目架构、代码约定和配置说明，不记录任何运行结果、实验数据或性能指标。这些内容随每次运行实时变化，应通过重新运行 notebook 获取，而非写入文档。**
+
 ## Project Overview
 
 This is a **power load forecasting** project using LSTM neural networks with **transfer learning**. The project processes electricity load data with weather and calendar features to predict future power consumption. It includes a **source domain** (data-rich building for pre-training) and a **target domain** (small-sample building for transfer learning).
@@ -28,7 +30,7 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 | `similarity_analysis.ipynb` | VMD-DTW similarity analysis to select best source-target pairs |
 | `prepare_transfer_data.ipynb` | Split and standardize selected source/target domain data |
 | `transfer_learning.ipynb` | Transfer learning experiments with three strategies |
-| `visualization.ipynb` | Data visualization summary (load curves, correlation analysis) |
+| `visualization.ipynb` | Data visualization summary (load curves, correlation analysis, transfer learning results) |
 
 ## Key Architecture
 
@@ -38,15 +40,19 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 - **Horizon**: 1 hour ahead prediction
 - **Data**: Sliding window with 1-hour continuity check
 - **Loss**: MAE (L1Loss)
-- **Evaluation**: MAE, RMSE, MAPE, R² on original kWh scale
+- **Evaluation**: MAE, RMSE, MAPE, R2 on original kWh scale
 - **Callbacks**: EarlyStopping(patience=5), ReduceLROnPlateau
+- **Learning Rate**: 源域预训练/Baseline=1e-3，迁移学习三种策略=1e-4
 - **Regularization**: weight_decay=1e-4 (Adam optimizer)
+- **Training loops stay in notebooks**: Do not encapsulate training loops (epoch loop + EarlyStopping + LR scheduler) into src/. They will be modified for targeted experiments and ablation studies. Only `run_epoch`-level primitives belong in src/
 
 ### VMD-DTW Similarity Analysis
 - **VMD**: Variational Mode Decomposition for signal decomposition into IMFs
 - **DTW**: Dynamic Time Warping distance for sequence similarity measurement
 - **Optimal K Selection**: Based on center frequency stability
 - **Weighted Similarity**: Weights computed based on center frequency (inversely proportional), ensuring low-frequency IMFs have higher weights
+- **Selection Criterion**: Primary criterion is weighted DTW distance (ascending, smallest = most similar); similarity percentage is an auxiliary metric
+- **Similarity Formula**: `similarity = (1 - weighted_dtw / dtw_original) × 100%`, representing how much VMD reveals hidden similarity compared to raw DTW. Can be negative when weighted DTW exceeds original DTW
 - **Standardization**: Each building's load data is standardized independently before VMD analysis to focus on pattern similarity rather than magnitude differences
 - **Transfer Direction**: Building with more data becomes source domain (for pre-training), building with less data becomes target domain (for fine-tuning)
 
@@ -59,16 +65,16 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 ### Transfer Learning Strategies
 1. **Full Fine-tuning**: Pre-train on source, fine-tune all parameters on target
 2. **Partial Fine-tuning**: Freeze LSTM layers, fine-tune FC layers only
-3. **Feature Extractor**: Use pre-trained LSTM as fixed feature extractor, train new regressor
+3. **Frozen Feature Extractor**: Use pre-trained LSTM as fixed feature extractor, train new regressor
 
 ## Key Configuration
 
 ### Shared Configuration (`src/config.py`)
 跨 notebook 共享的配置：
 - `BUILDINGS` - 建筑列表
-- `SOURCE_BUILDING`, `TARGET_BUILDING` - 源域和目标域建筑
-- `TARGET_SAMPLE_START`, `TARGET_SAMPLE_END` - 目标域小样本时间段（用于相似性分析和数据选取）
-- `BASE_DIR`, `BUILDINGS_DIR`, `SCALER_DIR`, `MODEL_DIR` - 路径配置
+- `SOURCE_BUILDING`, `TARGET_BUILDING` - 源域建筑，目标域建筑
+- `TARGET_SAMPLE_START`, `TARGET_SAMPLE_END` - 目标域小样本时间段
+- `BASE_DIR`, `BUILDINGS_DIR`, `SCALER_DIR`, `MODEL_DIR`, `FIGURES_DIR` - 路径配置
 - `TARGET_COL`, `TIME_COL` - 列名配置
 - `SEED` - 随机种子
 
@@ -83,7 +89,7 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 
 **源域（数据丰富，用于预训练）**
 - 使用全量数据，不分割
-- 预训练时从全量数据末尾划分 10% 作为验证集（用于早停）
+- 预训练时从全量数据末尾划分 20% 作为验证集（用于早停）
 
 **目标域（小样本，用于微调与评估）**
 - 选取 `TARGET_SAMPLE_START` 到 `TARGET_SAMPLE_END` 时间段的数据
@@ -102,31 +108,32 @@ Common functions extracted to `src/` module:
 - `create_sequences()` - Build sliding window sequences with continuity check
 
 ### `src/models.py`
-- `LSTMPredictor` - LSTM model class
-- `FeatureExtractorRegressor` - Feature extractor for transfer learning
+- `LSTMPredictor` - LSTM model class with optional LeakyReLU activation
+- `FeatureExtractorRegressor` - Frozen feature extractor (frozen LSTM + FC(128→64) + [LeakyReLU] + FC(64→1))
 
 ### `src/training.py`
 - `set_seed()` - Set random seeds for reproducibility
 - `mape()` - MAPE calculation with zero-division protection
 - `evaluate()` - Calculate MAE, RMSE, MAPE, R²
 - `LoadDataset` - PyTorch Dataset
-- `EarlyStopping` - Early stopping with best weights restoration
+- `EarlyStopping` - Early stopping with best weights restoration and `get_best_info()`
 - `run_epoch()` - Unified train/validate function
 - `predict()` - Model inference
 
 ### `src/split_standardize.py`
-- `standardize_load()` - Standardize load feature only (weather already standardized in preprocessing)
 - `prepare_source_domain()` - Full data standardization for source domain (no split)
 - `prepare_target_domain()` - Small sample selection + split for target domain
-- Uses `TARGET_COL` from config (shared column name)
+- Uses `TARGET_COL` and `TIME_COL` from config
 
-**Note: Internal constants are NOT exported**
-- `TRAIN_RATIO` and `VAL_RATIO` are internal constants used only as default arguments, not exported to public API
+**Note: Internal functions are NOT exported**
+- `standardize_load()` is an internal helper used only within `split_standardize.py`, not exported via `__init__.py`
+- `TRAIN_RATIO` (0.70) and `VAL_RATIO` (0.15) are internal constants used only as default arguments, not exported to public API
 - To change split ratios, modify the values directly in `split_standardize.py`
 
 ### `src/visualization.py`
-- `plot_training_history()` - Plot training/validation loss curves
-- `plot_predictions()` - Plot prediction comparison
+- `setup_plot_style()` - Configure matplotlib Chinese font and global style (replaces inline rcParams in notebooks)
+- `plot_training_history()` - Plot training/validation loss curves (supports `save_path` parameter)
+- `plot_predictions()` - Plot prediction comparison (supports `save_path` parameter)
 
 ## Data Files
 
@@ -149,24 +156,42 @@ Common functions extracted to `src/` module:
 - `data/scalers/source_load_scaler.joblib` - Source domain load scaler
 - `data/scalers/target_load_scaler.joblib` - Target domain load scaler
 
-### Model
+### Models
 - `models/pretrained_source.pt` - Pre-trained model on source domain
-- `models/transfer_*.pt` - Transfer learning models
+- `models/transfer_baseline.pt` - Baseline model (trained from scratch on target)
+- `models/transfer_full_finetune.pt` - Full fine-tuning model
+- `models/transfer_partial_finetune.pt` - Partial fine-tuning model (frozen LSTM)
+- `models/transfer_feature_extractor.pt` - Frozen feature extractor model
 
 ### Generated Files
 
 **Data Files:**
 - `data/相似性分析完整结果.json` - Complete analysis results (K, similarity, DTW distances, center frequencies, weights)
 - `data/相似性分析汇总.csv` - Building pair summary (pair, source, target, K, weighted DTW, original DTW, similarity)
+- `data/transfer_learning_results.csv` - Transfer learning performance metrics (MAE, RMSE, MAPE, R²)
 
 **Figures (in `data/figures/`):**
+
+Similarity Analysis:
 - `原始负荷对比.png` - Source vs target load comparison
-- `IMF1对比.png` ~ `IMF{n}对比.png` - IMF component comparisons
+- `IMF1对比.png` ~ `IMF{K}对比.png` - IMF component comparisons (K varies per pair)
+
+Load Curves:
 - `所有建筑小时负荷曲线.png` - All buildings hourly load curves
-- `源域目标域负荷对比.png` - Source vs target domain load comparison
 - `{建筑名}_月度负荷曲线.png` - Monthly load curves for each building
+
+Feature Analysis:
 - `{建筑名}_特征相关性.png` - Feature correlation analysis for each building
-- `迁移学习性能对比.png` - Transfer learning performance comparison
+
+Transfer Learning Results:
+- `迁移学习性能对比.png` - Transfer learning performance comparison (MAE, RMSE, MAPE, R²)
+
+**Transfer Learning Notebook Generated:**
+- `源域预训练_损失曲线.png` - Source domain pre-training loss curve
+- `Baseline_损失曲线.png` / `Baseline_预测对比.png` - Baseline model training and prediction
+- `全参数微调_损失曲线.png` / `全参数微调_预测对比.png` - Full fine-tuning training and prediction
+- `冻结LSTM微调_损失曲线.png` / `冻结LSTM微调_预测对比.png` - Partial fine-tuning training and prediction
+- `冻结特征提取_损失曲线.png` / `冻结特征提取_预测对比.png` - Frozen feature extractor training and prediction
 
 ## Feature Engineering
 
@@ -178,15 +203,3 @@ Common functions extracted to `src/` module:
 **Time features:**
 - Cyclical (sin/cos): hour, day_of_week, month
 - Boolean: is_holiday
-
-## Environment
-
-- Python 3.9
-- PyTorch
-- scikit-learn
-- pandas, numpy
-- matplotlib
-- vmdpy (VMD decomposition)
-- dtaidistance (DTW distance)
-- Jupyter notebooks
-- Virtual environment: `.venv/`

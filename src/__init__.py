@@ -25,15 +25,12 @@ from .training import (
 )
 
 from .visualization import (
+    setup_plot_style,
     plot_training_history,
     plot_predictions,
-    plot_load_comparison,
-    plot_dual_axis_comparison,
-    plot_monthly_load,
 )
 
 from .split_standardize import (
-    standardize_load,
     prepare_source_domain,
     prepare_target_domain,
 )
@@ -79,13 +76,10 @@ __all__ = [
     'run_epoch',
     'predict',
     # visualization
+    'setup_plot_style',
     'plot_training_history',
     'plot_predictions',
-    'plot_load_comparison',
-    'plot_dual_axis_comparison',
-    'plot_monthly_load',
     # split_standardize
-    'standardize_load',
     'prepare_source_domain',
     'prepare_target_domain',
     # config

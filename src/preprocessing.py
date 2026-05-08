@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+from .config import TIME_COL
+
 
 def build_hr_load_series(
     raw_df: pd.DataFrame,
@@ -84,10 +86,10 @@ def encode_cyclical_feature(value: pd.Series, max_val: int) -> tuple[pd.Series, 
     return sin_val, cos_val
 
 
-def load_data(path: Path, time_col: str = 'timestamp') -> pd.DataFrame:
+def load_data(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, encoding='utf-8-sig')
-    df[time_col] = pd.to_datetime(df[time_col], errors='coerce')
-    df = df.dropna(subset=[time_col]).sort_values(time_col).reset_index(drop=True)
+    df[TIME_COL] = pd.to_datetime(df[TIME_COL], errors='coerce')
+    df = df.dropna(subset=[TIME_COL]).sort_values(TIME_COL).reset_index(drop=True)
     return df
 
 
@@ -97,7 +99,6 @@ def create_sequences(
     target_col: str,
     lookback: int = 24,
     horizon: int = 1,
-    time_col: str = 'timestamp'
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     构造滑动窗口序列
@@ -108,7 +109,6 @@ def create_sequences(
         target_col: 目标列名
         lookback: 输入窗口长度
         horizon: 预测步长
-        time_col: 时间戳列名
 
     Returns:
         (X, y) 数组，X形状为 (样本数, lookback, 特征数)，y形状为 (样本数,)
@@ -119,7 +119,7 @@ def create_sequences(
     x, y = [], []
     max_i = len(df) - lookback - horizon + 1
     for i in range(max_i):
-        ts_seg = df[time_col].iloc[i:i + lookback + horizon]
+        ts_seg = df[TIME_COL].iloc[i:i + lookback + horizon]
         if ts_seg.isna().any():
             continue  # 如有缺失值跳过
         if not (ts_seg.diff().dropna() == pd.Timedelta(hours=1)).all():

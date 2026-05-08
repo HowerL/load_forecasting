@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__tavily-hikari__tavily_extract",
+      "mcp__fetch__fetch",
+      "mcp__tavily-hikari__tavily_research",
+      "mcp__tavily-hikari__tavily_search",
+      "mcp__sequential-thinking__sequentialthinking"
+    ]
+  }
+}

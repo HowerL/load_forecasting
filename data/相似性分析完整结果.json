@@ -3,7 +3,7 @@
     "source": "南阶",
     "target": "西阶",
     "K": 4,
-    "similarity": 0.561938,
+    "similarity_pct": 56.19,
     "weighted_dtw": 7.6082,
     "dtw_original": 17.3679,
     "center_freq_source": [
@@ -35,7 +35,7 @@
     "source": "南阶",
     "target": "粉体",
     "K": 4,
-    "similarity": 0.0,
+    "similarity_pct": -4.52,
     "weighted_dtw": 18.0997,
     "dtw_original": 17.317,
     "center_freq_source": [
@@ -67,7 +67,7 @@
     "source": "南阶",
     "target": "土木",
     "K": 5,
-    "similarity": 0.522166,
+    "similarity_pct": 52.22,
     "weighted_dtw": 10.6299,
     "dtw_original": 22.2459,
     "center_freq_source": [
@@ -103,20 +103,20 @@
     "source": "粉体",
     "target": "西阶",
     "K": 4,
-    "similarity": 0.0,
+    "similarity_pct": -15.01,
     "weighted_dtw": 25.3016,
     "dtw_original": 21.9989,
     "center_freq_source": [
-      0.041961,
-      0.001147,
-      0.16394,
-      0.33145
-    ],
-    "center_freq_target": [
       0.001307,
       0.041796,
       0.163761,
       0.389886
+    ],
+    "center_freq_target": [
+      0.041961,
+      0.001147,
+      0.16394,
+      0.33145
     ],
     "dtw_distances": [
       31.1804,
@@ -131,47 +131,11 @@
       0.0938
     ]
   },
-  "西阶-土木": {
-    "source": "土木",
-    "target": "西阶",
-    "K": 5,
-    "similarity": 0.429896,
-    "weighted_dtw": 8.9414,
-    "dtw_original": 15.6838,
-    "center_freq_source": [
-      0.001144,
-      0.041958,
-      0.163715,
-      0.248497,
-      0.36711
-    ],
-    "center_freq_target": [
-      0.000893,
-      0.041728,
-      0.164633,
-      0.20755,
-      0.336968
-    ],
-    "dtw_distances": [
-      10.6952,
-      6.29,
-      2.9003,
-      2.0606,
-      1.419
-    ],
-    "weights": [
-      0.7378,
-      0.1151,
-      0.0581,
-      0.0493,
-      0.0397
-    ]
-  },
   "南阶-环工": {
     "source": "南阶",
     "target": "环工",
     "K": 6,
-    "similarity": 0.618652,
+    "similarity_pct": 61.87,
     "weighted_dtw": 5.1786,
     "dtw_original": 13.5797,
     "center_freq_source": [
@@ -207,11 +171,47 @@
       0.045
     ]
   },
+  "西阶-土木": {
+    "source": "土木",
+    "target": "西阶",
+    "K": 5,
+    "similarity_pct": 42.99,
+    "weighted_dtw": 8.9414,
+    "dtw_original": 15.6838,
+    "center_freq_source": [
+      0.000893,
+      0.041728,
+      0.164633,
+      0.20755,
+      0.336968
+    ],
+    "center_freq_target": [
+      0.001144,
+      0.041958,
+      0.163715,
+      0.248497,
+      0.36711
+    ],
+    "dtw_distances": [
+      10.6952,
+      6.29,
+      2.9003,
+      2.0606,
+      1.419
+    ],
+    "weights": [
+      0.7378,
+      0.1151,
+      0.0581,
+      0.0493,
+      0.0397
+    ]
+  },
   "环工-土木": {
     "source": "环工",
     "target": "土木",
     "K": 6,
-    "similarity": 0.420377,
+    "similarity_pct": 42.04,
     "weighted_dtw": 13.1272,
     "dtw_original": 22.6478,
     "center_freq_source": [
@@ -251,7 +251,7 @@
     "source": "土木",
     "target": "粉体",
     "K": 5,
-    "similarity": 0.35215,
+    "similarity_pct": 35.21,
     "weighted_dtw": 16.6153,
     "dtw_original": 25.6469,
     "center_freq_source": [
@@ -287,7 +287,7 @@
     "source": "环工",
     "target": "粉体",
     "K": 6,
-    "similarity": 0.570762,
+    "similarity_pct": 57.08,
     "weighted_dtw": 6.986,
     "dtw_original": 16.2753,
     "center_freq_source": [
@@ -327,24 +327,24 @@
     "source": "环工",
     "target": "西阶",
     "K": 6,
-    "similarity": 0.594451,
+    "similarity_pct": 59.45,
     "weighted_dtw": 7.2563,
     "dtw_original": 17.8926,
     "center_freq_source": [
-      0.001143,
-      0.041957,
-      0.163723,
-      0.247944,
-      0.333414,
-      0.452522
-    ],
-    "center_freq_target": [
       0.001056,
       0.041702,
       0.164844,
       0.207192,
       0.283096,
       0.338248
+    ],
+    "center_freq_target": [
+      0.001143,
+      0.041957,
+      0.163723,
+      0.247944,
+      0.333414,
+      0.452522
     ],
     "dtw_distances": [
       8.3367,
