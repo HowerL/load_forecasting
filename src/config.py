@@ -13,13 +13,13 @@ MODEL_DIR = Path('models')
 # 建筑列表
 BUILDINGS = ['南阶', '西阶', '环工', '土木', '粉体']
 
-# 源域和目标域
-SOURCE_BUILDING = '环工'
-TARGET_BUILDING = '西阶'
-
 # 目标域小样本时间段（模拟"小样本"场景）
 TARGET_SAMPLE_START = '2024-03-15'
-TARGET_SAMPLE_END = '2024-07-01'
+TARGET_SAMPLE_END = '2024-06-15'
+
+# 源域和目标域
+SOURCE_BUILDING = '南阶'
+TARGET_BUILDING = '环工'
 
 # ============== 数据列配置 ==============
 TARGET_COL = 'hourly_kwh_clean'  # 目标列（负荷）
