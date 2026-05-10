@@ -31,8 +31,11 @@ def plot_training_history(train_losses: list, val_losses: list, title: str = 'Tr
 def plot_predictions(y_true: np.ndarray, y_pred: np.ndarray, title: str, scaler=None, save_path: str = None):
     """绘制预测结果对比图"""
     if scaler is not None:
-        y_true = scaler.inverse_transform(y_true.reshape(-1, 1)).ravel()
-        y_pred = scaler.inverse_transform(y_pred.reshape(-1, 1)).ravel()
+        y_true = scaler.inverse_transform(y_true.reshape(-1, 1)).reshape(y_true.shape)
+        y_pred = scaler.inverse_transform(y_pred.reshape(-1, 1)).reshape(y_pred.shape)
+
+    y_true = np.asarray(y_true).ravel()
+    y_pred = np.asarray(y_pred).ravel()
 
     fig, ax = plt.subplots(figsize=(14, 4))
     ax.grid(True, alpha=0.3)

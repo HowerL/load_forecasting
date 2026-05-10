@@ -5,12 +5,12 @@ import torch.nn as nn
 
 
 class LSTMPredictor(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int = 128, use_activation: bool = False):
+    def __init__(self, input_size: int, hidden_size: int = 128, horizon: int = 1, use_activation: bool = False):
         super(LSTMPredictor, self).__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
         self.use_activation = use_activation
         self.activation = nn.LeakyReLU(0.1) if use_activation else None
-        self.fc = nn.Linear(hidden_size, 1)
+        self.fc = nn.Linear(hidden_size, horizon)
 
     def forward(self, x):
         # x shape: (batch, seq_len, features)
@@ -29,7 +29,7 @@ class FeatureExtractorRegressor(nn.Module):
 
     将预训练的LSTM作为固定特征提取器，训练新的回归层。
     """
-    def __init__(self, pretrained_model: LSTMPredictor, feature_dim: int = 128, use_activation: bool = False):
+    def __init__(self, pretrained_model: LSTMPredictor, feature_dim: int = 128, horizon: int = 1, use_activation: bool = False):
         super(FeatureExtractorRegressor, self).__init__()
 
         # 直接引用预训练的LSTM
@@ -43,7 +43,7 @@ class FeatureExtractorRegressor(nn.Module):
         self.use_activation = use_activation
         self.activation = nn.LeakyReLU(0.1) if use_activation else None
         self.fc1 = nn.Linear(feature_dim, feature_dim // 2)
-        self.fc2 = nn.Linear(feature_dim // 2, 1)
+        self.fc2 = nn.Linear(feature_dim // 2, horizon)
 
     def forward(self, x):
         # 使用冻结的LSTM提取特征

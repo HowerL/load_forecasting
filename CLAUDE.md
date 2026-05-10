@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**重要：本文件仅记录项目架构、代码约定和配置说明，不记录任何运行结果、实验数据或性能指标。这些内容随每次运行实时变化，应通过重新运行 notebook 获取，而非写入文档。**
+**Important: This file only records project architecture, code conventions, and configuration. It does NOT record any runtime results, experiment data, or performance metrics. These change with every run and should be obtained by re-running notebooks, not written into documentation.**
 
 ## Project Overview
 
@@ -30,21 +30,29 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 | `similarity_analysis.ipynb` | VMD-DTW similarity analysis to select best source-target pairs |
 | `prepare_transfer_data.ipynb` | Split and standardize selected source/target domain data |
 | `transfer_learning.ipynb` | Transfer learning experiments with three strategies |
+| `multistep_comparison.ipynb` | Multi-step vs single-step prediction comparison experiment |
 | `visualization.ipynb` | Data visualization summary (load curves, correlation analysis, transfer learning results) |
 
 ## Key Architecture
 
 ### LSTM Model
-- **Model**: LSTM(128) + [LeakyReLU (optional)] + Dense(1)
+- **Model**: LSTM(128) + [LeakyReLU (optional)] + Dense(horizon)
 - **Lookback**: 24 hours of historical data
-- **Horizon**: 1 hour ahead prediction
+- **Horizon**: Configurable prediction steps (default=1 for single-step; set HORIZON in notebook for multi-step)
 - **Data**: Sliding window with 1-hour continuity check
 - **Loss**: MAE (L1Loss)
-- **Evaluation**: MAE, RMSE, MAPE, R2 on original kWh scale
+- **Evaluation**: MAE, RMSE, CV-RMSE, MAPE, R² on original kWh scale
 - **Callbacks**: EarlyStopping(patience=5), ReduceLROnPlateau
 - **Learning Rate**: 源域预训练/Baseline=1e-3，迁移学习三种策略=1e-4
 - **Regularization**: weight_decay=1e-4 (Adam optimizer)
 - **Training loops stay in notebooks**: Do not encapsulate training loops (epoch loop + EarlyStopping + LR scheduler) into src/. They will be modified for targeted experiments and ablation studies. Only `run_epoch`-level primitives belong in src/
+
+### Multi-step Prediction
+- The model supports multi-step output via the `horizon` parameter in `LSTMPredictor` and `FeatureExtractorRegressor`
+- When `horizon > 1`, the output layer produces a vector of `horizon` values instead of a scalar
+- `create_sequences()` returns y with shape `(N, horizon)` when horizon > 1, and `(N, 1)` when horizon = 1
+- `evaluate()` and `evaluate_per_step()` (in `multistep_comparison.ipynb`) handle both shapes
+- Key experimental finding: single-step prediction (H=1) achieves the best Step-1 accuracy; multi-step models suffer from information bottleneck that degrades even the nearest step's prediction
 
 ### VMD-DTW Similarity Analysis
 - **VMD**: Variational Mode Decomposition for signal decomposition into IMFs
@@ -66,6 +74,13 @@ data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ip
 1. **Full Fine-tuning**: Pre-train on source, fine-tune all parameters on target
 2. **Partial Fine-tuning**: Freeze LSTM layers, fine-tune FC layers only
 3. **Frozen Feature Extractor**: Use pre-trained LSTM as fixed feature extractor, train new regressor
+
+### Evaluation Metrics
+- **MAE**: Mean Absolute Error (kWh)
+- **RMSE**: Root Mean Squared Error (kWh)
+- **CV-RMSE**: Coefficient of Variation of RMSE (`RMSE / mean(y_true) × 100%`), ASHRAE standard metric for building energy
+- **MAPE**: Mean Absolute Percentage Error (%)
+- **R²**: Coefficient of determination
 
 ## Key Configuration
 
@@ -105,20 +120,20 @@ Common functions extracted to `src/` module:
 - `detect_outliers()` - MAD-based outlier detection
 - `encode_cyclical_feature()` - Sin/cos encoding for cyclical features
 - `load_data()` - Load and parse CSV with timestamp
-- `create_sequences()` - Build sliding window sequences with continuity check
+- `create_sequences()` - Build sliding window sequences with continuity check; y shape is `(N, horizon)`
 
 ### `src/models.py`
-- `LSTMPredictor` - LSTM model class with optional LeakyReLU activation
-- `FeatureExtractorRegressor` - Frozen feature extractor (frozen LSTM + FC(128→64) + [LeakyReLU] + FC(64→1))
+- `LSTMPredictor` - LSTM model class with optional LeakyReLU activation; `horizon` param controls output dimension (default=1)
+- `FeatureExtractorRegressor` - Frozen feature extractor (frozen LSTM + FC(128→64) + [LeakyReLU] + FC(64→horizon))
 
 ### `src/training.py`
 - `set_seed()` - Set random seeds for reproducibility
 - `mape()` - MAPE calculation with zero-division protection
-- `evaluate()` - Calculate MAE, RMSE, MAPE, R²
-- `LoadDataset` - PyTorch Dataset
+- `evaluate()` - Calculate MAE, RMSE, CV-RMSE, MAPE, R²; handles both 1D `(N,)` and 2D `(N, H)` arrays
+- `LoadDataset` - PyTorch Dataset; auto-unsqueeze 1D y to `(N, 1)` for consistent batching
 - `EarlyStopping` - Early stopping with best weights restoration and `get_best_info()`
 - `run_epoch()` - Unified train/validate function
-- `predict()` - Model inference
+- `predict()` - Model inference; returns shape `(N, horizon)` (2D for all horizons)
 
 ### `src/split_standardize.py`
 - `prepare_source_domain()` - Full data standardization for source domain (no split)
@@ -133,7 +148,7 @@ Common functions extracted to `src/` module:
 ### `src/visualization.py`
 - `setup_plot_style()` - Configure matplotlib Chinese font and global style (replaces inline rcParams in notebooks)
 - `plot_training_history()` - Plot training/validation loss curves (supports `save_path` parameter)
-- `plot_predictions()` - Plot prediction comparison (supports `save_path` parameter)
+- `plot_predictions()` - Plot prediction comparison; handles multi-step y by raveling (supports `save_path` parameter)
 
 ## Data Files
 
@@ -162,13 +177,16 @@ Common functions extracted to `src/` module:
 - `models/transfer_full_finetune.pt` - Full fine-tuning model
 - `models/transfer_partial_finetune.pt` - Partial fine-tuning model (frozen LSTM)
 - `models/transfer_feature_extractor.pt` - Frozen feature extractor model
+- `models/multistep_source_h{1,6,12,24}.pt` - Source pre-trained models for each horizon (multi-step experiment)
 
 ### Generated Files
 
 **Data Files:**
 - `data/相似性分析完整结果.json` - Complete analysis results (K, similarity, DTW distances, center frequencies, weights)
 - `data/相似性分析汇总.csv` - Building pair summary (pair, source, target, K, weighted DTW, original DTW, similarity)
-- `data/transfer_learning_results.csv` - Transfer learning performance metrics (MAE, RMSE, MAPE, R²)
+- `data/transfer_learning_results.csv` - Transfer learning performance metrics (MAE, RMSE, CV-RMSE, MAPE, R²)
+- `data/multistep_step1_comparison.csv` - Step-1 accuracy comparison across different horizons
+- `data/multistep_per_step_results.csv` - Per-step accuracy for all horizons and strategies
 
 **Figures (in `data/figures/`):**
 
@@ -184,7 +202,11 @@ Feature Analysis:
 - `{建筑名}_特征相关性.png` - Feature correlation analysis for each building
 
 Transfer Learning Results:
-- `迁移学习性能对比.png` - Transfer learning performance comparison (MAE, RMSE, MAPE, R²)
+- `迁移学习性能对比.png` - Transfer learning performance comparison (3×2 layout: MAE, RMSE, CV-RMSE, MAPE, R²)
+
+Multi-step Experiment:
+- `多步预测_Step1对比.png` - Step-1 accuracy bar chart across horizons
+- `多步预测_逐步衰减.png` - Per-step accuracy decay curves
 
 **Transfer Learning Notebook Generated:**
 - `源域预训练_损失曲线.png` - Source domain pre-training loss curve

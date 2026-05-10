@@ -27,21 +27,29 @@ def mape(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-6) -> float:
 
 
 def evaluate(y_true_std: np.ndarray, y_pred_std: np.ndarray, scaler) -> dict:
-    y_true = scaler.inverse_transform(y_true_std.reshape(-1, 1)).ravel()
-    y_pred = scaler.inverse_transform(y_pred_std.reshape(-1, 1)).ravel()
+    y_true = scaler.inverse_transform(y_true_std.reshape(-1, 1)).reshape(y_true_std.shape)
+    y_pred = scaler.inverse_transform(y_pred_std.reshape(-1, 1)).reshape(y_pred_std.shape)
 
+    y_true_1d = y_true.ravel()
+    y_pred_1d = y_pred.ravel()
+
+    rmse = np.sqrt(mean_squared_error(y_true_1d, y_pred_1d))
     return {
-        'MAE': mean_absolute_error(y_true, y_pred),
-        'RMSE': np.sqrt(mean_squared_error(y_true, y_pred)),
-        'MAPE': mape(y_true, y_pred),
-        'R2': r2_score(y_true, y_pred)
+        'MAE': mean_absolute_error(y_true_1d, y_pred_1d),
+        'RMSE': rmse,
+        'CV-RMSE': rmse / np.mean(y_true_1d) * 100,
+        'MAPE': mape(y_true_1d, y_pred_1d),
+        'R2': r2_score(y_true_1d, y_pred_1d)
     }
 
 
 class LoadDataset(Dataset):
     def __init__(self, X: np.ndarray, y: np.ndarray):
         self.X = torch.from_numpy(X)
-        self.y = torch.from_numpy(y).unsqueeze(-1)
+        y_tensor = torch.from_numpy(y)
+        if y_tensor.dim() == 1:
+            y_tensor = y_tensor.unsqueeze(-1)
+        self.y = y_tensor.float()
 
     def __len__(self):
         return len(self.X)
@@ -139,4 +147,4 @@ def predict(model, dataloader, device) -> np.ndarray:
             X_batch = X_batch.to(device)
             outputs = model(X_batch)
             predictions.append(outputs.cpu().numpy())
-    return np.concatenate(predictions, axis=0).ravel()
+    return np.concatenate(predictions, axis=0)

@@ -111,7 +111,7 @@ def create_sequences(
         horizon: 预测步长
 
     Returns:
-        (X, y) 数组，X形状为 (样本数, lookback, 特征数)，y形状为 (样本数,)
+        (X, y) 数组，X形状为 (样本数, lookback, 特征数)，y形状为 (样本数, horizon)
     """
     values = df[feature_cols].astype(np.float32).to_numpy()
     target_idx = feature_cols.index(target_col)
@@ -126,8 +126,8 @@ def create_sequences(
             continue  # 如有间断点跳过
 
         x_i = values[i:i + lookback]
-        y_i = values[i + lookback + horizon - 1, target_idx]
-        if np.isnan(x_i).any() or np.isnan(y_i):
+        y_i = values[i + lookback: i + lookback + horizon, target_idx]
+        if np.isnan(x_i).any() or np.any(np.isnan(y_i)):
             continue  # 如有缺失值跳过
 
         x.append(x_i)
