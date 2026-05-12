@@ -1,227 +1,178 @@
-# CLAUDE.md
+本文件是项目说明和协作指南，记录项目结构、主要流程、代码约定和关键配置。不要在这里记录某次运行得到的实验指标、图表数值或中间日志；这些内容以重新运行 notebook 生成的结果文件为准。
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 项目概述
 
-**Important: This file only records project architecture, code conventions, and configuration. It does NOT record any runtime results, experiment data, or performance metrics. These change with every run and should be obtained by re-running notebooks, not written into documentation.**
+本项目用于“基于迁移学习的校园建筑用能负荷预测研究”。整体思路是：对校园建筑逐小时电力负荷、天气和日历数据进行预处理，通过 VMD-DTW 相似性分析辅助选择源域建筑，再构造源域/目标域数据集，最后比较 LSTM 迁移学习策略在目标域小样本场景下的表现。
 
-## Project Overview
+基本流程：
 
-This is a **power load forecasting** project using LSTM neural networks with **transfer learning**. The project processes electricity load data with weather and calendar features to predict future power consumption. It includes a **source domain** (data-rich building for pre-training) and a **target domain** (small-sample building for transfer learning).
-
-我的课题是"基于迁移学习的校园建筑用能负荷预测研究"，这个课题需要依次经过以下处理：数据预处理（异常值检测、缺失值填充、特征工程等）->相似性分析后选取相似性最佳的建筑作为源域->进行数据集分割与标准化->迁移学习。我手上有一些校园建筑逐小时的电力负荷数据集，我需要对其中一栋的指定某段时间作为研究用的"小样本数据"目标域，从其他建筑丰富的数据中选取相似度最高的作为源域来迁移。
-
-## Data Pipeline
-
-The processing flow is:
-```
-data_preprocess.ipynb → similarity_analysis.ipynb → prepare_transfer_data.ipynb → transfer_learning.ipynb
+```text
+data_preprocess.ipynb
+→ similarity_analysis.ipynb
+→ prepare_transfer_data.ipynb
+→ transfer_learning.ipynb
+→ visualization.ipynb
 ```
 
-1. **Data Preprocessing**: `data_preprocess.ipynb` - All buildings' load & weather cleaning, time feature engineering
-2. **Similarity Analysis**: `similarity_analysis.ipynb` - VMD-DTW similarity analysis to select best source-target pairs
-3. **Data Preparation**: `prepare_transfer_data.ipynb` - Prepare source (full data) and target (small sample) domain data
-4. **Transfer Learning**: `transfer_learning.ipynb` - Train source model and apply transfer learning strategies
+`multistep_comparison.ipynb` 是独立的多步预测对比实验，只验证不同 `HORIZON` 下 `目标域训练` 与 `全层微调` 的多步表现。
 
-## Notebooks
+## Notebook 职责
 
-| Notebook | Purpose |
-|----------|---------|
-| `data_preprocess.ipynb` | All buildings data preprocessing (generalized for any number of buildings) |
-| `similarity_analysis.ipynb` | VMD-DTW similarity analysis to select best source-target pairs |
-| `prepare_transfer_data.ipynb` | Split and standardize selected source/target domain data |
-| `transfer_learning.ipynb` | Transfer learning experiments with three strategies |
-| `multistep_comparison.ipynb` | Multi-step vs single-step prediction comparison experiment |
-| `visualization.ipynb` | Data visualization summary (load curves, correlation analysis, transfer learning results) |
+| Notebook | 作用 |
+| --- | --- |
+| `data_preprocess.ipynb` | 处理原始建筑负荷、天气和日历数据，生成各建筑特征文件 |
+| `similarity_analysis.ipynb` | 对建筑负荷模式做 VMD-DTW 相似性排序，辅助选择源域/目标域组合 |
+| `prepare_transfer_data.ipynb` | 根据 `src/config.py` 中的源域/目标域配置，生成标准化迁移学习数据 |
+| `transfer_learning.ipynb` | 训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出单 seed 与多 seed 结果 |
+| `multistep_comparison.ipynb` | 对比 `HORIZON = [1, 6, 12, 24]` 下目标域训练和全层微调的多步预测表现 |
+| `visualization.ipynb` | 汇总生成负荷曲线、相关性分析和迁移学习结果图 |
 
-## Key Architecture
+## 关键配置
 
-### LSTM Model
-- **Model**: LSTM(128) + [LeakyReLU (optional)] + Dense(horizon)
-- **Lookback**: 24 hours of historical data
-- **Horizon**: Configurable prediction steps (default=1 for single-step; set HORIZON in notebook for multi-step)
-- **Data**: Sliding window with 1-hour continuity check
-- **Loss**: MAE (L1Loss)
-- **Evaluation**: MAE, RMSE, CV-RMSE, MAPE, R² on original kWh scale
-- **Callbacks**: EarlyStopping(patience=5), ReduceLROnPlateau
-- **Learning Rate**: 源域预训练/Baseline=1e-3，迁移学习三种策略=1e-4
-- **Regularization**: weight_decay=1e-4 (Adam optimizer)
-- **Training loops stay in notebooks**: Do not encapsulate training loops (epoch loop + EarlyStopping + LR scheduler) into src/. They will be modified for targeted experiments and ablation studies. Only `run_epoch`-level primitives belong in src/
+共享配置位于 `src/config.py`：
 
-### Multi-step Prediction
-- The model supports multi-step output via the `horizon` parameter in `LSTMPredictor` and `FeatureExtractorRegressor`
-- When `horizon > 1`, the output layer produces a vector of `horizon` values instead of a scalar
-- `create_sequences()` returns y with shape `(N, horizon)` when horizon > 1, and `(N, 1)` when horizon = 1
-- `evaluate()` and `evaluate_per_step()` (in `multistep_comparison.ipynb`) handle both shapes
-- Key experimental finding: single-step prediction (H=1) achieves the best Step-1 accuracy; multi-step models suffer from information bottleneck that degrades even the nearest step's prediction
+- `BUILDINGS`：参与实验的建筑列表
+- `SOURCE_BUILDING` / `TARGET_BUILDING`：当前迁移学习实验使用的源域和目标域，由人工根据相似性分析结果配置
+- `TARGET_SAMPLE_START` / `TARGET_SAMPLE_END`：目标域小样本窗口
+- `BASE_DIR` / `BUILDINGS_DIR` / `SCALER_DIR` / `MODEL_DIR` / `FIGURES_DIR`：输出路径
+- `TARGET_COL` / `TIME_COL`：负荷目标列和时间列
+- `SEED`：主实验随机种子
 
-### VMD-DTW Similarity Analysis
-- **VMD**: Variational Mode Decomposition for signal decomposition into IMFs
-- **DTW**: Dynamic Time Warping distance for sequence similarity measurement
-- **Optimal K Selection**: Based on center frequency stability
-- **Weighted Similarity**: Weights computed based on center frequency (inversely proportional), ensuring low-frequency IMFs have higher weights
-- **Selection Criterion**: Primary criterion is weighted DTW distance (ascending, smallest = most similar); similarity percentage is an auxiliary metric
-- **Similarity Formula**: `similarity = (1 - weighted_dtw / dtw_original) × 100%`, representing how much VMD reveals hidden similarity compared to raw DTW. Can be negative when weighted DTW exceeds original DTW
-- **Standardization**: Each building's load data is standardized independently before VMD analysis to focus on pattern similarity rather than magnitude differences
-- **Transfer Direction**: Building with more data becomes source domain (for pre-training), building with less data becomes target domain (for fine-tuning)
+`src/split_standardize.py` 中的 `TRAIN_RATIO = 0.70` 通过 `src/__init__.py` 暴露为公共 API，供 notebook 对齐数据切分和相似性选择窗口。`VAL_RATIO = 0.15` 仍是 `split_standardize.py` 内部默认参数。
 
-**Core Functions (defined in `similarity_analysis.ipynb`):**
-- `determine_optimal_k()` - Determine optimal VMD decomposition level K
-- `compute_imf_weights()` - Calculate weights based on center frequency (weight ∝ 1 / f^(1/decay_factor))
-- `compute_vmd_dtw_similarity()` - Core computation: VMD + DTW + similarity
-- `_compute_pair_similarity_task()` - Parallel task wrapper for ThreadPoolExecutor
+模型超参数如 `LOOKBACK`、`HORIZON`、`BATCH_SIZE`、`EPOCHS`、`HIDDEN_SIZE` 保持在各 notebook 内部定义，便于实验调整。
 
-### Transfer Learning Strategies
-1. **Full Fine-tuning**: Pre-train on source, fine-tune all parameters on target
-2. **Partial Fine-tuning**: Freeze LSTM layers, fine-tune FC layers only
-3. **Frozen Feature Extractor**: Use pre-trained LSTM as fixed feature extractor, train new regressor
+## 数据与特征流程
 
-### Evaluation Metrics
-- **MAE**: Mean Absolute Error (kWh)
-- **RMSE**: Root Mean Squared Error (kWh)
-- **CV-RMSE**: Coefficient of Variation of RMSE (`RMSE / mean(y_true) × 100%`), ASHRAE standard metric for building energy
-- **MAPE**: Mean Absolute Percentage Error (%)
-- **R²**: Coefficient of determination
+`data_preprocess.ipynb`：
 
-## Key Configuration
+- 将原始累计电量转换为小时负荷。
+- 使用滑动 MAD 检测异常值，异常值转为缺失后再填充。
+- 缺失填充优先使用前 7 天同小时均值，不足时回退到前 14 天同小时均值，最后用时间插值和前向填充兜底。
+- 天气连续特征使用全量天气数据拟合 `weather_scaler.joblib`；天气类别特征使用 one-hot 编码。
+- 时间特征包括 `hour`、`day_of_week`、`month` 的 sin/cos 编码和 `is_holiday`。
 
-### Shared Configuration (`src/config.py`)
-跨 notebook 共享的配置：
-- `BUILDINGS` - 建筑列表
-- `SOURCE_BUILDING`, `TARGET_BUILDING` - 源域建筑，目标域建筑
-- `TARGET_SAMPLE_START`, `TARGET_SAMPLE_END` - 目标域小样本时间段
-- `BASE_DIR`, `BUILDINGS_DIR`, `SCALER_DIR`, `MODEL_DIR`, `FIGURES_DIR` - 路径配置
-- `TARGET_COL`, `TIME_COL` - 列名配置
-- `SEED` - 随机种子
+主要输入：
 
-### Notebook-local Hyperparameters
-模型超参数（如 `LOOKBACK`, `HORIZON`, `BATCH_SIZE`, `EPOCHS`, `HIDDEN_SIZE`）在各 notebook 中本地定义，便于独立调整。
+- `data/buildings/{建筑名}.CSV`
+- `data/天气.CSV`
+- `data/2024日历.csv`
 
-### Data Split Strategy (`src/split_standardize.py`)
+主要输出：
 
-**标准化策略**
-- **天气数据**：在 `data_preprocess.ipynb` 阶段使用全量天气数据标准化，所有建筑共享同一份 `weather_scaler.joblib`
-- **负荷数据**：每个域独立标准化（建筑间负荷量级差异大）
+- `data/buildings/{建筑名}_预处理后.csv`
+- `data/buildings/{建筑名}_特征.csv`
+- `data/天气_预处理后.csv`
+- `data/scalers/weather_scaler.joblib`
 
-**源域（数据丰富，用于预训练）**
-- 使用全量数据，不分割
-- 预训练时从全量数据末尾划分 20% 作为验证集（用于早停）
+## 相似性分析约定
 
-**目标域（小样本，用于微调与评估）**
-- 选取 `TARGET_SAMPLE_START` 到 `TARGET_SAMPLE_END` 时间段的数据
-- 按 70%/15%/15% 比例分割为训练/验证/测试集
+`similarity_analysis.ipynb` 对每个建筑的负荷独立标准化后计算 VMD-DTW，相似性排序以 `加权DTW` 升序为主判据，`相似度(%)` 只作为辅助解释指标。
 
-## src/ Module
+为避免评估泄漏，相似性分析不使用完整目标小样本窗口，而是在 `TARGET_SAMPLE_START <= timestamp < TARGET_SAMPLE_END` 内取所有建筑公共时间索引的前 `TRAIN_RATIO` 部分作为相似性选择窗口。`determine_optimal_k()` 和成对 VMD-DTW 计算都使用这个窗口。该 notebook 不导入 `TARGET_BUILDING`，因为源域和目标域是在相似性排序后由人工确认。
 
-Common functions extracted to `src/` module:
+相似性结果输出：
 
-### `src/preprocessing.py`
-- `build_hr_load_series()` - Convert cumulative energy to hourly load
-- `fill_missing()` - Multi-level fallback: 7-day → 14-day hourly mean → interpolation
-- `detect_outliers()` - MAD-based outlier detection
-- `encode_cyclical_feature()` - Sin/cos encoding for cyclical features
-- `load_data()` - Load and parse CSV with timestamp
-- `create_sequences()` - Build sliding window sequences with continuity check; y shape is `(N, horizon)`
+- `data/相似性分析汇总.csv`
+- `data/相似性分析完整结果.json`
+- `data/figures/原始负荷对比.png`
+- `data/figures/IMF{n}对比.png`
 
-### `src/models.py`
-- `LSTMPredictor` - LSTM model class with optional LeakyReLU activation; `horizon` param controls output dimension (default=1)
-- `FeatureExtractorRegressor` - Frozen feature extractor (frozen LSTM + FC(128→64) + [LeakyReLU] + FC(64→horizon))
+如果论文需要展示“源域选择有效性”，采用轻量手动对比：分别选择 `加权DTW` 最小和最大的两组建筑对，人工修改 `SOURCE_BUILDING` / `TARGET_BUILDING` 后重跑数据准备和迁移学习，计算：
 
-### `src/training.py`
-- `set_seed()` - Set random seeds for reproducibility
-- `mape()` - MAPE calculation with zero-division protection
-- `evaluate()` - Calculate MAE, RMSE, CV-RMSE, MAPE, R²; handles both 1D `(N,)` and 2D `(N, H)` arrays
-- `LoadDataset` - PyTorch Dataset; auto-unsqueeze 1D y to `(N, 1)` for consistent batching
-- `EarlyStopping` - Early stopping with best weights restoration and `get_best_info()`
-- `run_epoch()` - Unified train/validate function
-- `predict()` - Model inference; returns shape `(N, horizon)` (2D for all horizons)
+```text
+PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
+```
 
-### `src/split_standardize.py`
-- `prepare_source_domain()` - Full data standardization for source domain (no split)
-- `prepare_target_domain()` - Small sample selection + split for target domain
-- Uses `TARGET_COL` and `TIME_COL` from config
+只有两组对比时不报告 Spearman/Kendall 相关性。
 
-**Note: Internal functions are NOT exported**
-- `standardize_load()` is an internal helper used only within `split_standardize.py`, not exported via `__init__.py`
-- `TRAIN_RATIO` (0.70) and `VAL_RATIO` (0.15) are internal constants used only as default arguments, not exported to public API
-- To change split ratios, modify the values directly in `split_standardize.py`
+## 数据切分与标准化
 
-### `src/visualization.py`
-- `setup_plot_style()` - Configure matplotlib Chinese font and global style (replaces inline rcParams in notebooks)
-- `plot_training_history()` - Plot training/validation loss curves (supports `save_path` parameter)
-- `plot_predictions()` - Plot prediction comparison; handles multi-step y by raveling (supports `save_path` parameter)
+`prepare_transfer_data.ipynb` 使用 `src/config.py` 指定的源域和目标域：
 
-## Data Files
+- 源域：使用全量特征数据，只标准化负荷，不做 train/val/test 切分。
+- 目标域：截取 `TARGET_SAMPLE_START` 到 `TARGET_SAMPLE_END` 的小样本窗口，按 70%/15%/15% 划分训练、验证、测试。
+- 天气特征已在预处理阶段标准化；迁移学习阶段只对负荷列做域内标准化。
+- 目标域验证集和测试集复用目标训练集拟合出的负荷 scaler。
 
-### Input Files
-- `data/buildings/{建筑名}.CSV` - Raw power load data (cumulative kWh) for each building
-- `data/天气.CSV` - Raw weather data (shared across all buildings)
-- `data/2024日历.csv` - Calendar features
+输出：
 
-### Preprocessed Files
-- `data/buildings/{建筑名}_预处理后.csv` - Cleaned load data for each building
-- `data/buildings/{建筑名}_特征.csv` - Merged features (load + standardized weather + time) for each building
-- `data/天气_预处理后.csv` - Cleaned and standardized weather data (with one-hot encoding)
+- `data/source_train_std.csv`
+- `data/target_train_std.csv`
+- `data/target_val_std.csv`
+- `data/target_test_std.csv`
+- `data/scalers/source_load_scaler.joblib`
+- `data/scalers/target_load_scaler.joblib`
 
-### Standardized Files (for transfer learning)
-- `data/source_train_std.csv` - Source domain full standardized data (for pre-training)
-- `data/target_train_std.csv` / `data/target_val_std.csv` / `data/target_test_std.csv` - Target domain standardized data (small sample split)
+## 模型与训练
 
-### Scalers
-- `data/scalers/weather_scaler.joblib` - Weather scaler (shared across all buildings, created in preprocessing)
-- `data/scalers/source_load_scaler.joblib` - Source domain load scaler
-- `data/scalers/target_load_scaler.joblib` - Target domain load scaler
+公共模型在 `src/models.py`：
 
-### Models
-- `models/pretrained_source.pt` - Pre-trained model on source domain
-- `models/transfer_baseline.pt` - Baseline model (trained from scratch on target)
-- `models/transfer_full_finetune.pt` - Full fine-tuning model
-- `models/transfer_partial_finetune.pt` - Partial fine-tuning model (frozen LSTM)
-- `models/transfer_feature_extractor.pt` - Frozen feature extractor model
-- `models/multistep_source_h{1,6,12,24}.pt` - Source pre-trained models for each horizon (multi-step experiment)
+- `LSTMPredictor`：单层 LSTM + 线性输出层，`horizon` 控制输出维度。
+- `FeatureExtractorRegressor`：复用并冻结预训练 LSTM，接 `Linear(128, 64)` 和 `Linear(64, horizon)` 作为回归头。
 
-### Generated Files
+公共训练工具在 `src/training.py`：
 
-**Data Files:**
-- `data/相似性分析完整结果.json` - Complete analysis results (K, similarity, DTW distances, center frequencies, weights)
-- `data/相似性分析汇总.csv` - Building pair summary (pair, source, target, K, weighted DTW, original DTW, similarity)
-- `data/transfer_learning_results.csv` - Transfer learning performance metrics (MAE, RMSE, CV-RMSE, MAPE, R²)
-- `data/multistep_step1_comparison.csv` - Step-1 accuracy comparison across different horizons
-- `data/multistep_per_step_results.csv` - Per-step accuracy for all horizons and strategies
+- `set_seed()`
+- `LoadDataset`
+- `EarlyStopping`
+- `run_epoch()`
+- `predict()`
+- `evaluate()`：返回 `MAE`、`RMSE`、`CV-RMSE`、`MAPE`、`R2`
 
-**Figures (in `data/figures/`):**
+序列构造由 `src/preprocessing.py:create_sequences()` 完成，要求时间戳逐小时连续；输出形状为 `X=(N, lookback, feature_count)`，`y=(N, horizon)`。`transfer_learning.ipynb` 的数据流保持为：DataFrame → `create_sequences()` 生成 ndarray → `LoadDataset` 包装为 `torch_datasets`；各策略函数内部按需构造 `DataLoader`。
 
-Similarity Analysis:
-- `原始负荷对比.png` - Source vs target load comparison
-- `IMF1对比.png` ~ `IMF{K}对比.png` - IMF component comparisons (K varies per pair)
+完整训练循环保留在 notebook 中，不下沉到 `src/`。`src/` 只保留可复用的模型、数据集、指标和单 epoch 训练/验证函数。
 
-Load Curves:
-- `所有建筑小时负荷曲线.png` - All buildings hourly load curves
-- `{建筑名}_月度负荷曲线.png` - Monthly load curves for each building
+`transfer_learning.ipynb` 中多 seed 执行编排直接写在 `[*REPEAT_SEEDS, SEED]` 循环体中；多 seed 汇总和相对 `目标域训练` 的配对统计检验直接写在“实验结果汇总”代码单元中。除 `mean_ci()` 这类会重复使用的小型统计辅助函数外，不为只调用一次的执行编排或汇总逻辑额外定义函数。
 
-Feature Analysis:
-- `{建筑名}_特征相关性.png` - Feature correlation analysis for each building
+`transfer_learning.ipynb` 当前包含的策略：
 
-Transfer Learning Results:
-- `迁移学习性能对比.png` - Transfer learning performance comparison (3×2 layout: MAE, RMSE, CV-RMSE, MAPE, R²)
+1. `源域直测（Source-only）`：只在源域训练，不在目标域迁移，直接在目标测试集预测。
+2. `目标域训练（Target-only）`：不在源域训练，只在目标域训练集上从零训练模型，作为主参照。
+3. `全层微调（Full fine-tune）`：加载源域训练权重后在目标域微调全部层。
+4. `冻结LSTM微调（Frozen-LSTM fine-tune）`：冻结 LSTM 层，微调其它层。
+5. `冻结特征回归（Frozen-feature regression）`：冻结特征提取层，重新训练新的回归头。
 
-Multi-step Experiment:
-- `多步预测_Step1对比.png` - Step-1 accuracy bar chart across horizons
-- `多步预测_逐步衰减.png` - Per-step accuracy decay curves
+当前训练设置：
 
-**Transfer Learning Notebook Generated:**
-- `源域预训练_损失曲线.png` - Source domain pre-training loss curve
-- `Baseline_损失曲线.png` / `Baseline_预测对比.png` - Baseline model training and prediction
-- `全参数微调_损失曲线.png` / `全参数微调_预测对比.png` - Full fine-tuning training and prediction
-- `冻结LSTM微调_损失曲线.png` / `冻结LSTM微调_预测对比.png` - Partial fine-tuning training and prediction
-- `冻结特征提取_损失曲线.png` / `冻结特征提取_预测对比.png` - Frozen feature extractor training and prediction
+- 源域训练与 `目标域训练`：`lr=1e-3`，`weight_decay=1e-4`
+- `全层微调`：`lr=1e-4`，`weight_decay=1e-4`
+- `冻结LSTM微调` 与 `冻结特征回归`：`lr=1e-3`，`weight_decay=1e-4`
+- 各训练函数内部创建 `EarlyStopping(patience=5, restore_best_weights=True)` 并传入 `fit_model()`，便于后续按策略单独调整
+- `ReduceLROnPlateau(factor=0.5, patience=4)`
+- 多 seed：`REPEAT_SEEDS = [7, 21, 84, 2024]`，实际执行顺序直接使用 `[*REPEAT_SEEDS, SEED]`
 
-## Feature Engineering
+每个 seed 运行都会保存模型和图表；由于保存路径固定，后执行的 seed 会覆盖同名模型和图表。`[*REPEAT_SEEDS, SEED]` 将主 `SEED` 放在最后，确保最终保存的模型和图表来自主 `SEED`；CSV 结果仍保留主 `SEED` 单次结果和全部 seed 的统计结果。
 
-**Weather features:**
-- Continuous: 温度(℃), 风力(级), 风速(km/h), 气压(hPa), 湿度(%), 能见度(km), 云量%
-- Precipitation: 是否降水 (boolean), 降水量对数变换 (log1p)
-- Categorical: One-hot encoded (天气状况, 风向)
+## 结果文件
 
-**Time features:**
-- Cyclical (sin/cos): hour, day_of_week, month
-- Boolean: is_holiday
+迁移学习输出：
+
+- `models/pretrained_source.pt`
+- `models/transfer_target_only.pt`
+- `models/transfer_full_fine_tune.pt`
+- `models/transfer_frozen_lstm_fine_tune.pt`
+- `models/transfer_frozen_feature_regression.pt`
+- `data/transfer_learning_results.csv`
+- `data/transfer_learning_seed_results.csv`
+- `data/transfer_learning_seed_summary.csv`
+- `data/transfer_learning_seed_tests.csv`
+
+`transfer_learning_results.csv` 由 `transfer_learning.ipynb` 生成，预期包含 `CV-RMSE`。如果该列缺失，应重跑 `transfer_learning.ipynb`，不要手动补列。
+
+多步预测输出：
+
+- `models/multistep_source_h{1,6,12,24}.pt`
+- `data/multistep_step1_comparison.csv`
+- `data/multistep_per_step_results.csv`
+
+`multistep_comparison.ipynb` 只保留两种结果策略：`目标域训练（Target-only）` 和 `全层微调（Full fine-tune）`。源域训练只用于为全层微调提供初始权重，不作为结果策略展示。该 notebook 按当前 `HORIZON` 在循环内构造序列和 `torch_datasets`，各训练步骤内部自行构造 `DataLoader`、`EarlyStopping` 和学习率调度器。
+
+主要图表输出位于 `data/figures/`，包括负荷曲线、特征相关性、相似性分析、迁移学习预测对比和多步预测对比图。具体文件以各 notebook 的保存路径为准。
+
+## 维护约定
+
+- 以代码和 notebook 为准维护本文档；本文档不作为 changelog 使用。
+- 不记录某次运行的指标数值、最佳 epoch、排序结论或图表解释。
+- 修改实验逻辑后，同步更新相关 notebook、`src/` 公共接口说明和本文件中的结构性描述。

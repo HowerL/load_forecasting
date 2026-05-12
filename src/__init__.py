@@ -33,6 +33,7 @@ from .visualization import (
 from .split_standardize import (
     prepare_source_domain,
     prepare_target_domain,
+    TRAIN_RATIO,
 )
 
 from .config import (
@@ -82,6 +83,7 @@ __all__ = [
     # split_standardize
     'prepare_source_domain',
     'prepare_target_domain',
+    'TRAIN_RATIO',
     # config
     'BASE_DIR',
     'BUILDINGS_DIR',
