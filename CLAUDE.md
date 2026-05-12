@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-本项目用于“基于迁移学习的校园建筑用能负荷预测研究”。整体思路是：对校园建筑逐小时电力负荷、天气和日历数据进行预处理，通过 VMD-DTW 相似性分析辅助选择源域建筑，再构造源域/目标域数据集，最后比较 LSTM 迁移学习策略在目标域小样本场景下的表现。
+本项目用于“基于迁移学习的校园建筑用能负荷预测研究”。整体思路是：对校园建筑逐小时电力负荷、天气和日历数据进行预处理，通过 VMD-DTW 相似性分析辅助选择源域建筑，再构造源域/目标域数据集，比较 LSTM 迁移学习策略在目标域小样本场景下的表现，并在同一数据流程后续补充不同预测步长下的多步预测对比。
 
 基本流程：
 
@@ -11,21 +11,20 @@ data_preprocess.ipynb
 → similarity_analysis.ipynb
 → prepare_transfer_data.ipynb
 → transfer_learning.ipynb
+→ multistep_comparison.ipynb
 → visualization.ipynb
 ```
 
-`multistep_comparison.ipynb` 是独立的多步预测对比实验，只验证不同 `HORIZON` 下 `目标域训练` 与 `全层微调` 的多步表现。
-
 ## Notebook 职责
 
-| Notebook | 作用 |
-| --- | --- |
-| `data_preprocess.ipynb` | 处理原始建筑负荷、天气和日历数据，生成各建筑特征文件 |
-| `similarity_analysis.ipynb` | 对建筑负荷模式做 VMD-DTW 相似性排序，辅助选择源域/目标域组合 |
-| `prepare_transfer_data.ipynb` | 根据 `src/config.py` 中的源域/目标域配置，生成标准化迁移学习数据 |
-| `transfer_learning.ipynb` | 训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出单 seed 与多 seed 结果 |
-| `multistep_comparison.ipynb` | 对比 `HORIZON = [1, 6, 12, 24]` 下目标域训练和全层微调的多步预测表现 |
-| `visualization.ipynb` | 汇总生成负荷曲线、相关性分析和迁移学习结果图 |
+| Notebook | 作用                                                 |
+| --- |----------------------------------------------------|
+| `data_preprocess.ipynb` | 处理原始建筑负荷、天气和日历数据，生成各建筑特征文件                         |
+| `similarity_analysis.ipynb` | 对建筑负荷模式做 VMD-DTW 相似性排序，辅助选择源域/目标域组合                |
+| `prepare_transfer_data.ipynb` | 根据 `src/config.py` 中的源域/目标域配置，生成标准化迁移学习数据          |
+| `transfer_learning.ipynb` | 训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出单 seed 与多 seed 结果  |
+| `multistep_comparison.ipynb` | 迁移学习后的多步预测对比环节，验证不同 `HORIZON` 下目标域训练与全层微调的多步预测表现 |
+| `visualization.ipynb` | 汇总生成负荷曲线、相关性分析和迁移学习结果图                             |
 
 ## 关键配置
 
@@ -166,10 +165,11 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 - `models/multistep_source_h{1,6,12,24}.pt`
 - `data/multistep_step1_comparison.csv`
 - `data/multistep_per_step_results.csv`
+- `data/figures/多步预测_逐步衰减.png`
 
 `multistep_comparison.ipynb` 只保留两种结果策略：`目标域训练（Target-only）` 和 `全层微调（Full fine-tune）`。源域训练只用于为全层微调提供初始权重，不作为结果策略展示。该 notebook 按当前 `HORIZON` 在循环内构造序列和 `torch_datasets`，各训练步骤内部自行构造 `DataLoader`、`EarlyStopping` 和学习率调度器。
 
-主要图表输出位于 `data/figures/`，包括负荷曲线、特征相关性、相似性分析、迁移学习预测对比和多步预测对比图。具体文件以各 notebook 的保存路径为准。
+主要保存图表位于 `data/figures/`，包括相似性分析图、迁移学习训练/预测图、迁移学习指标对比图和多步预测逐步衰减图。`visualization.ipynb` 中的负荷曲线和特征相关性分析主要在 notebook 内展示；除迁移学习指标对比图外不另存。具体文件以各 notebook 的保存路径为准。
 
 ## 维护约定
 
