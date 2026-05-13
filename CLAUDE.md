@@ -15,6 +15,16 @@ data_preprocess.ipynb
 → visualization.ipynb
 ```
 
+## Agent 运行环境约定
+
+本项目使用仓库内虚拟环境。Agent 如需通过终端运行 `python`、`pip`、`jupyter`、`pytest` 或依赖 Python 解释器的命令，必须先按当前终端类型调用 `.venv/Scripts` 中对应的激活脚本，并在同一条终端命令会话内继续执行后续命令，避免因新会话未继承环境而出现找不到 `python` 或误用系统 Python 的问题。
+
+- Git Bash / Bash：`source .venv/Scripts/activate`
+- PowerShell：`. .venv/Scripts/Activate.ps1`
+- CMD：`call .venv/Scripts/activate.bat`
+
+如果只需要执行单个 Python 模块命令，也可以直接使用虚拟环境解释器，例如 `.venv/Scripts/python.exe -m pytest` 或 `.venv/Scripts/python.exe -m pip install ...`。在受限 PowerShell 或自动化沙箱中，`Activate.ps1` 可能无法 dot-source；此时不要继续调用裸 `python`，应直接使用 `.venv/Scripts/python.exe`。不要依赖未激活环境中的 `python`、`python3`、`py` 或全局 `pip`。
+
 ## Notebook 职责
 
 | Notebook | 作用                                                 |
