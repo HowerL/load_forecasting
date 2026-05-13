@@ -22,7 +22,7 @@ data_preprocess.ipynb
 | `data_preprocess.ipynb` | 处理原始建筑负荷、天气和日历数据，生成各建筑特征文件                         |
 | `similarity_analysis.ipynb` | 对建筑负荷模式做 VMD-DTW 相似性排序，辅助选择源域/目标域组合                |
 | `prepare_transfer_data.ipynb` | 根据 `src/config.py` 中的源域/目标域配置，生成标准化迁移学习数据          |
-| `transfer_learning.ipynb` | 训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出单 seed 与多 seed 结果  |
+| `transfer_learning.ipynb` | 训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出多 seed 明细、均值汇总与配对检验结果  |
 | `multistep_comparison.ipynb` | 迁移学习后的多步预测对比环节，验证不同 `HORIZON` 下目标域训练与全层微调的多步预测表现 |
 | `visualization.ipynb` | 汇总生成负荷曲线、相关性分析和迁移学习结果图                             |
 
@@ -35,7 +35,7 @@ data_preprocess.ipynb
 - `TARGET_SAMPLE_START` / `TARGET_SAMPLE_END`：目标域小样本窗口
 - `BASE_DIR` / `BUILDINGS_DIR` / `SCALER_DIR` / `MODEL_DIR` / `FIGURES_DIR`：输出路径
 - `TARGET_COL` / `TIME_COL`：负荷目标列和时间列
-- `SEED`：主实验随机种子
+- `SEED`：用于固定生成论文展示图表和同名模型文件的随机种子；统计汇总时与 `REPEAT_SEEDS` 中的 seed 一起纳入多 seed 重复实验
 
 `src/split_standardize.py` 中的 `TRAIN_RATIO = 0.70` 通过 `src/__init__.py` 暴露为公共 API，供 notebook 对齐数据切分和相似性选择窗口。`VAL_RATIO = 0.15` 仍是 `split_standardize.py` 内部默认参数。
 
@@ -123,7 +123,7 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 
 完整训练循环保留在 notebook 中，不下沉到 `src/`。`src/` 只保留可复用的模型、数据集、指标和单 epoch 训练/验证函数。
 
-`transfer_learning.ipynb` 中多 seed 执行编排直接写在 `[*REPEAT_SEEDS, SEED]` 循环体中；多 seed 汇总和相对 `目标域训练` 的配对统计检验直接写在“实验结果汇总”代码单元中。除 `mean_ci()` 这类会重复使用的小型统计辅助函数外，不为只调用一次的执行编排或汇总逻辑额外定义函数。
+`transfer_learning.ipynb` 中多 seed 执行编排直接写在 `[*REPEAT_SEEDS, SEED]` 循环体中；多 seed 均值汇总和相对 `目标域训练` 的配对统计检验直接写在“实验结果汇总”代码单元中。除 `mean_ci()` 这类会重复使用的小型统计辅助函数外，不为只调用一次的执行编排或汇总逻辑额外定义函数。
 
 `transfer_learning.ipynb` 当前包含的策略：
 
@@ -140,9 +140,9 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 - `冻结LSTM微调` 与 `冻结特征回归`：`lr=1e-3`，`weight_decay=1e-4`
 - 各训练函数内部创建 `EarlyStopping(patience=5, restore_best_weights=True)` 并传入 `fit_model()`，便于后续按策略单独调整
 - `ReduceLROnPlateau(factor=0.5, patience=4)`
-- 多 seed：`REPEAT_SEEDS = [7, 21, 84, 2024]`，实际执行顺序直接使用 `[*REPEAT_SEEDS, SEED]`
+- 多 seed：实际执行顺序直接使用 `[*REPEAT_SEEDS, SEED]` 一起参与统计汇总
 
-每个 seed 运行都会保存模型和图表；由于保存路径固定，后执行的 seed 会覆盖同名模型和图表。`[*REPEAT_SEEDS, SEED]` 将主 `SEED` 放在最后，确保最终保存的模型和图表来自主 `SEED`；CSV 结果仍保留主 `SEED` 单次结果和全部 seed 的统计结果。
+每个 seed 运行都会保存模型和图表；由于保存路径固定，后执行的 seed 会覆盖同名模型和图表。`SEED` 排在执行列表最后，仅用于固定同名模型和预测图的最终保存版本；定量比较以所有 seed 的平均结果、置信区间和配对检验为主要依据。
 
 ## 结果文件
 
@@ -153,12 +153,12 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 - `models/transfer_full_fine_tune.pt`
 - `models/transfer_frozen_lstm_fine_tune.pt`
 - `models/transfer_frozen_feature_regression.pt`
-- `data/transfer_learning_results.csv`
-- `data/transfer_learning_seed_results.csv`
-- `data/transfer_learning_seed_summary.csv`
-- `data/transfer_learning_seed_tests.csv`
+- `data/transfer_learning_strategy_mean_metrics.csv`
+- `data/transfer_learning_per_seed_metrics.csv`
+- `data/transfer_learning_strategy_metric_stats.csv`
+- `data/transfer_learning_paired_tests_vs_target.csv`
 
-`transfer_learning_results.csv` 由 `transfer_learning.ipynb` 生成，预期包含 `CV-RMSE`。如果该列缺失，应重跑 `transfer_learning.ipynb`，不要手动补列。
+`transfer_learning_strategy_mean_metrics.csv` 由 `transfer_learning.ipynb` 生成，保存各策略在所有 seed 上的平均 `MAE`、`RMSE`、`CV-RMSE`、`MAPE` 和 `R2`，供后续可视化和论文结果表使用。
 
 多步预测输出：
 
