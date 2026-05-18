@@ -1,0 +1,11 @@
+﻿建筑对,K,alpha,经验熵适应度,建筑A经验熵,建筑B经验熵,优化成功,迭代次数,函数评估次数,优化信息
+西阶-环工,3,2239.779266,2.850013,2.674596,3.02543,True,6,70,Optimization terminated successfully.
+西阶-粉体,2,2239.779266,2.874593,2.674393,3.074794,True,1,20,Optimization terminated successfully.
+南阶-西阶,4,4861.483248,2.886062,3.020137,2.751988,True,3,40,Optimization terminated successfully.
+西阶-土木,2,2239.779266,2.890914,2.674393,3.107435,True,1,20,Optimization terminated successfully.
+南阶-粉体,3,927.821438,3.054044,3.071731,3.036357,True,1,20,Optimization terminated successfully.
+环工-粉体,3,852.251701,3.054828,3.074246,3.03541,True,1,20,Optimization terminated successfully.
+南阶-环工,3,927.821438,3.076267,3.071731,3.080803,True,1,20,Optimization terminated successfully.
+南阶-土木,4,563.623154,3.086113,3.040884,3.131341,True,1,20,Optimization terminated successfully.
+环工-土木,3,2239.779266,3.086429,3.02543,3.147428,True,1,20,Optimization terminated successfully.
+土木-粉体,3,852.251701,3.08701,3.13861,3.03541,True,1,20,Optimization terminated successfully.

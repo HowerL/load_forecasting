@@ -2,389 +2,551 @@
   "南阶-西阶": {
     "source": "南阶",
     "target": "西阶",
-    "K": 5,
-    "similarity_pct": 47.57,
-    "weighted_dtw": 6.7559,
+    "K": 4,
+    "alpha": 4861.483248,
+    "entropy_fitness": 2.886062,
+    "source_entropy": 3.020137,
+    "target_entropy": 2.751988,
+    "weighted_dtw": 5.2471,
     "dtw_original": 12.8854,
     "center_freq_source": [
-      0.003917,
-      0.041552,
-      0.165177,
-      0.289648,
-      0.415945
+      0.006395,
+      0.120243,
+      0.206694,
+      0.372996
     ],
     "center_freq_target": [
-      0.00055,
-      0.041397,
-      0.163771,
-      0.288162,
-      0.372129
+      0.001054,
+      0.12313,
+      0.248095,
+      0.372908
+    ],
+    "imf_entropy_source": [
+      3.03882,
+      2.795834,
+      3.136877,
+      2.6914
+    ],
+    "imf_entropy_target": [
+      2.744449,
+      2.844077,
+      2.799953,
+      2.737307
+    ],
+    "entropy_weights_source": [
+      0.858553,
+      0.086316,
+      0.048138,
+      0.006993
+    ],
+    "entropy_weights_target": [
+      0.91041,
+      0.069481,
+      0.012134,
+      0.007976
     ],
     "dtw_distances": [
-      8.3597,
-      6.1731,
-      1.8011,
-      1.3335,
-      1.2522
+      6.7853,
+      1.9108,
+      1.2224,
+      0.8503
     ],
     "weights": [
-      0.6615,
-      0.1535,
-      0.0771,
-      0.0582,
-      0.0498
-    ]
-  },
-  "南阶-土木": {
-    "source": "南阶",
-    "target": "土木",
-    "K": 6,
-    "similarity_pct": 48.25,
-    "weighted_dtw": 9.1624,
-    "dtw_original": 17.7046,
-    "center_freq_source": [
-      0.003909,
-      0.041542,
-      0.164436,
-      0.208807,
-      0.291472,
-      0.416852
+      0.7128,
+      0.1247,
+      0.0912,
+      0.0712
     ],
-    "center_freq_target": [
-      0.000329,
-      0.041232,
-      0.164952,
-      0.207594,
-      0.332528,
-      0.435165
-    ],
-    "dtw_distances": [
-      13.1211,
-      4.1513,
-      2.0106,
-      1.2666,
-      1.3681,
-      1.0142
-    ],
-    "weights": [
-      0.6275,
-      0.142,
-      0.0712,
-      0.0633,
-      0.0517,
-      0.0443
-    ]
-  },
-  "南阶-粉体": {
-    "source": "南阶",
-    "target": "粉体",
-    "K": 6,
-    "similarity_pct": 56.59,
-    "weighted_dtw": 5.1214,
-    "dtw_original": 11.7971,
-    "center_freq_source": [
-      0.003909,
-      0.041542,
-      0.164436,
-      0.208807,
-      0.291472,
-      0.416852
-    ],
-    "center_freq_target": [
-      0.002721,
-      0.04147,
-      0.165328,
-      0.259078,
-      0.330275,
-      0.454945
-    ],
-    "dtw_distances": [
-      6.3464,
-      6.6029,
-      2.0461,
-      1.3231,
-      1.2823,
-      1.0049
-    ],
-    "weights": [
-      0.5767,
-      0.163,
-      0.0818,
-      0.0687,
-      0.0596,
-      0.0503
-    ]
-  },
-  "西阶-土木": {
-    "source": "土木",
-    "target": "西阶",
-    "K": 6,
-    "similarity_pct": 26.26,
-    "weighted_dtw": 8.6504,
-    "dtw_original": 11.7303,
-    "center_freq_source": [
-      0.000329,
-      0.041232,
-      0.164952,
-      0.207594,
-      0.332528,
-      0.435165
-    ],
-    "center_freq_target": [
-      0.000549,
-      0.041394,
-      0.163548,
-      0.246651,
-      0.332109,
-      0.416806
-    ],
-    "dtw_distances": [
-      10.3247,
-      4.0456,
-      1.9299,
-      1.2397,
-      1.0854,
-      0.8168
-    ],
-    "weights": [
-      0.7891,
-      0.0813,
-      0.0408,
-      0.0347,
-      0.0287,
-      0.0253
-    ]
-  },
-  "西阶-环工": {
-    "source": "环工",
-    "target": "西阶",
-    "K": 5,
-    "similarity_pct": 56.81,
-    "weighted_dtw": 5.4867,
-    "dtw_original": 12.705,
-    "center_freq_source": [
-      0.002195,
-      0.041406,
-      0.164811,
-      0.206878,
-      0.299971
-    ],
-    "center_freq_target": [
-      0.00055,
-      0.041397,
-      0.163771,
-      0.288162,
-      0.372129
-    ],
-    "dtw_distances": [
-      6.4944,
-      5.0574,
-      1.7588,
-      1.2251,
-      1.2394
-    ],
-    "weights": [
-      0.7083,
-      0.129,
-      0.0647,
-      0.0527,
-      0.0453
-    ]
+    "optimization_success": true,
+    "optimization_nit": 3,
+    "optimization_nfev": 40,
+    "optimization_message": "Optimization terminated successfully."
   },
   "南阶-环工": {
     "source": "南阶",
     "target": "环工",
-    "K": 5,
-    "similarity_pct": 53.13,
-    "weighted_dtw": 3.9075,
+    "K": 3,
+    "alpha": 927.821438,
+    "entropy_fitness": 3.076267,
+    "source_entropy": 3.071731,
+    "target_entropy": 3.080803,
+    "weighted_dtw": 3.1839,
     "dtw_original": 8.3376,
     "center_freq_source": [
-      0.003917,
-      0.041552,
-      0.165177,
-      0.289648,
-      0.415945
+      0.038988,
+      0.161419,
+      0.288809
     ],
     "center_freq_target": [
-      0.002195,
-      0.041406,
-      0.164811,
-      0.206878,
-      0.299971
+      0.037163,
+      0.160205,
+      0.20242
+    ],
+    "imf_entropy_source": [
+      3.099484,
+      2.992752,
+      1.631873
+    ],
+    "imf_entropy_target": [
+      3.086041,
+      3.058009,
+      2.424898
+    ],
+    "entropy_weights_source": [
+      0.929778,
+      0.055336,
+      0.014886
+    ],
+    "entropy_weights_target": [
+      0.958827,
+      0.034722,
+      0.00645
     ],
     "dtw_distances": [
-      4.9378,
-      3.1327,
-      1.7854,
-      1.5963,
-      0.9342
+      4.2928,
+      1.9969,
+      1.8345
     ],
     "weights": [
-      0.6208,
-      0.1685,
-      0.0845,
-      0.0689,
-      0.0574
-    ]
+      0.5318,
+      0.2588,
+      0.2094
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
+  },
+  "南阶-土木": {
+    "source": "南阶",
+    "target": "土木",
+    "K": 4,
+    "alpha": 563.623154,
+    "entropy_fitness": 3.086113,
+    "source_entropy": 3.040884,
+    "target_entropy": 3.131341,
+    "weighted_dtw": 13.044,
+    "dtw_original": 17.7046,
+    "center_freq_source": [
+      0.03753,
+      0.081471,
+      0.165648,
+      0.291526
+    ],
+    "center_freq_target": [
+      0.000383,
+      0.04144,
+      0.163732,
+      0.367681
+    ],
+    "imf_entropy_source": [
+      3.068326,
+      3.009593,
+      3.066962,
+      1.602962
+    ],
+    "imf_entropy_target": [
+      3.204401,
+      3.000928,
+      2.844168,
+      2.387671
+    ],
+    "entropy_weights_source": [
+      0.854696,
+      0.077251,
+      0.052472,
+      0.015582
+    ],
+    "entropy_weights_target": [
+      0.661537,
+      0.319048,
+      0.0169,
+      0.002515
+    ],
+    "dtw_distances": [
+      19.6396,
+      12.5908,
+      2.3288,
+      1.7497
+    ],
+    "weights": [
+      0.4685,
+      0.2602,
+      0.1589,
+      0.1124
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
+  },
+  "南阶-粉体": {
+    "source": "南阶",
+    "target": "粉体",
+    "K": 3,
+    "alpha": 927.821438,
+    "entropy_fitness": 3.054044,
+    "source_entropy": 3.071731,
+    "target_entropy": 3.036357,
+    "weighted_dtw": 5.09,
+    "dtw_original": 11.7971,
+    "center_freq_source": [
+      0.038988,
+      0.161419,
+      0.288809
+    ],
+    "center_freq_target": [
+      0.038036,
+      0.158268,
+      0.259368
+    ],
+    "imf_entropy_source": [
+      3.099484,
+      2.992752,
+      1.631873
+    ],
+    "imf_entropy_target": [
+      3.04211,
+      2.960576,
+      2.682323
+    ],
+    "entropy_weights_source": [
+      0.929778,
+      0.055336,
+      0.014886
+    ],
+    "entropy_weights_target": [
+      0.955094,
+      0.037389,
+      0.007517
+    ],
+    "dtw_distances": [
+      7.7322,
+      2.3079,
+      1.6844
+    ],
+    "weights": [
+      0.536,
+      0.2631,
+      0.2009
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
+  },
+  "西阶-土木": {
+    "source": "土木",
+    "target": "西阶",
+    "K": 2,
+    "alpha": 2239.779266,
+    "entropy_fitness": 2.890914,
+    "source_entropy": 3.107435,
+    "target_entropy": 2.674393,
+    "weighted_dtw": 8.5141,
+    "dtw_original": 11.7303,
+    "center_freq_source": [
+      0.000864,
+      0.16349
+    ],
+    "center_freq_target": [
+      0.003021,
+      0.159941
+    ],
+    "imf_entropy_source": [
+      3.109326,
+      3.017298
+    ],
+    "imf_entropy_target": [
+      2.661464,
+      2.884015
+    ],
+    "entropy_weights_source": [
+      0.979449,
+      0.020551
+    ],
+    "entropy_weights_target": [
+      0.941908,
+      0.058092
+    ],
+    "dtw_distances": [
+      9.2338,
+      1.9473
+    ],
+    "weights": [
+      0.9012,
+      0.0988
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
   },
   "西阶-粉体": {
     "source": "粉体",
     "target": "西阶",
-    "K": 6,
-    "similarity_pct": 37.47,
-    "weighted_dtw": 10.1039,
+    "K": 2,
+    "alpha": 2239.779266,
+    "entropy_fitness": 2.874593,
+    "source_entropy": 3.074794,
+    "target_entropy": 2.674393,
+    "weighted_dtw": 15.9567,
     "dtw_original": 16.1579,
     "center_freq_source": [
-      0.002721,
-      0.04147,
-      0.165328,
-      0.259078,
-      0.330275,
-      0.454945
+      0.040325,
+      0.165196
     ],
     "center_freq_target": [
-      0.000549,
-      0.041394,
-      0.163548,
-      0.246651,
-      0.332109,
-      0.416806
+      0.003021,
+      0.159941
+    ],
+    "imf_entropy_source": [
+      3.076084,
+      3.040403
+    ],
+    "imf_entropy_target": [
+      2.661464,
+      2.884015
+    ],
+    "entropy_weights_source": [
+      0.963849,
+      0.036151
+    ],
+    "entropy_weights_target": [
+      0.941908,
+      0.058092
     ],
     "dtw_distances": [
-      13.805,
-      5.1354,
-      1.9982,
-      1.2408,
-      1.0769,
-      0.979
+      21.0293,
+      2.0639
     ],
     "weights": [
-      0.6621,
-      0.1315,
-      0.066,
-      0.0532,
-      0.0465,
-      0.0406
-    ]
+      0.7325,
+      0.2675
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
   },
   "环工-土木": {
     "source": "环工",
     "target": "土木",
-    "K": 6,
-    "similarity_pct": 32.07,
-    "weighted_dtw": 12.3014,
+    "K": 3,
+    "alpha": 2239.779266,
+    "entropy_fitness": 3.086429,
+    "source_entropy": 3.02543,
+    "target_entropy": 3.147428,
+    "weighted_dtw": 14.4701,
     "dtw_original": 18.1095,
     "center_freq_source": [
-      0.002194,
-      0.041406,
-      0.164823,
-      0.206815,
-      0.296391,
-      0.398464
+      0.009963,
+      0.16306,
+      0.200359
     ],
     "center_freq_target": [
-      0.000329,
-      0.041232,
-      0.164952,
-      0.207594,
-      0.332528,
-      0.435165
+      0.000324,
+      0.165702,
+      0.041229
+    ],
+    "imf_entropy_source": [
+      3.023898,
+      3.125592,
+      2.511282
+    ],
+    "imf_entropy_target": [
+      3.2068,
+      3.018001,
+      3.02804
+    ],
+    "entropy_weights_source": [
+      0.922373,
+      0.06727,
+      0.010356
+    ],
+    "entropy_weights_target": [
+      0.668684,
+      0.014552,
+      0.316764
     ],
     "dtw_distances": [
-      16.9875,
-      3.614,
-      1.6731,
-      0.8688,
-      0.9091,
-      0.9477
+      16.2479,
+      1.7501,
+      16.7583
     ],
     "weights": [
-      0.6856,
-      0.1198,
-      0.06,
-      0.0535,
-      0.0434,
-      0.0377
-    ]
+      0.7229,
+      0.1279,
+      0.1492
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
+  },
+  "西阶-环工": {
+    "source": "环工",
+    "target": "西阶",
+    "K": 3,
+    "alpha": 2239.779266,
+    "entropy_fitness": 2.850013,
+    "source_entropy": 3.02543,
+    "target_entropy": 2.674596,
+    "weighted_dtw": 4.5443,
+    "dtw_original": 12.705,
+    "center_freq_source": [
+      0.009963,
+      0.16306,
+      0.200359
+    ],
+    "center_freq_target": [
+      0.002997,
+      0.159943,
+      0.329659
+    ],
+    "imf_entropy_source": [
+      3.023898,
+      3.125592,
+      2.511282
+    ],
+    "imf_entropy_target": [
+      2.660857,
+      2.886437,
+      2.739759
+    ],
+    "entropy_weights_source": [
+      0.922373,
+      0.06727,
+      0.010356
+    ],
+    "entropy_weights_target": [
+      0.932275,
+      0.057234,
+      0.010491
+    ],
+    "dtw_distances": [
+      5.6137,
+      1.6883,
+      1.3639
+    ],
+    "weights": [
+      0.7371,
+      0.1476,
+      0.1153
+    ],
+    "optimization_success": true,
+    "optimization_nit": 6,
+    "optimization_nfev": 70,
+    "optimization_message": "Optimization terminated successfully."
   },
   "环工-粉体": {
     "source": "环工",
     "target": "粉体",
-    "K": 6,
-    "similarity_pct": 55.59,
-    "weighted_dtw": 5.3736,
+    "K": 3,
+    "alpha": 852.251701,
+    "entropy_fitness": 3.054828,
+    "source_entropy": 3.074246,
+    "target_entropy": 3.03541,
+    "weighted_dtw": 5.3985,
     "dtw_original": 12.0996,
     "center_freq_source": [
-      0.002194,
-      0.041406,
-      0.164823,
-      0.206815,
-      0.296391,
-      0.398464
+      0.03673,
+      0.159499,
+      0.202067
     ],
     "center_freq_target": [
-      0.002721,
-      0.04147,
-      0.165328,
-      0.259078,
-      0.330275,
-      0.454945
+      0.037711,
+      0.156774,
+      0.25894
+    ],
+    "imf_entropy_source": [
+      3.079795,
+      3.043431,
+      2.416693
+    ],
+    "imf_entropy_target": [
+      3.042191,
+      2.938122,
+      2.666609
+    ],
+    "entropy_weights_source": [
+      0.959225,
+      0.034286,
+      0.006488
+    ],
+    "entropy_weights_target": [
+      0.954904,
+      0.037406,
+      0.00769
     ],
     "dtw_distances": [
-      6.5426,
-      6.8824,
-      2.1258,
-      1.1727,
-      1.0044,
-      1.1344
+      8.4044,
+      2.4111,
+      1.5249
     ],
     "weights": [
-      0.6125,
-      0.1492,
-      0.0747,
-      0.0629,
-      0.0542,
-      0.0465
-    ]
+      0.5299,
+      0.2571,
+      0.213
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
   },
   "土木-粉体": {
     "source": "土木",
     "target": "粉体",
-    "K": 6,
-    "similarity_pct": 30.17,
-    "weighted_dtw": 14.0899,
+    "K": 3,
+    "alpha": 852.251701,
+    "entropy_fitness": 3.08701,
+    "source_entropy": 3.13861,
+    "target_entropy": 3.03541,
+    "weighted_dtw": 17.89,
     "dtw_original": 20.1768,
     "center_freq_source": [
-      0.000329,
-      0.041232,
-      0.164952,
-      0.207594,
-      0.332528,
-      0.435165
+      0.000369,
+      0.041359,
+      0.164503
     ],
     "center_freq_target": [
-      0.002721,
-      0.04147,
-      0.165328,
-      0.259078,
-      0.330275,
-      0.454945
+      0.037711,
+      0.156774,
+      0.25894
+    ],
+    "imf_entropy_source": [
+      3.208768,
+      3.004521,
+      2.901012
+    ],
+    "imf_entropy_target": [
+      3.042191,
+      2.938122,
+      2.666609
+    ],
+    "entropy_weights_source": [
+      0.664695,
+      0.319144,
+      0.016161
+    ],
+    "entropy_weights_target": [
+      0.954904,
+      0.037406,
+      0.00769
     ],
     "dtw_distances": [
-      19.6744,
-      5.1426,
-      2.0934,
-      1.1798,
-      0.8693,
-      0.8913
+      25.1872,
+      11.8242,
+      2.424
     ],
     "weights": [
-      0.6687,
-      0.1284,
-      0.0643,
-      0.0541,
-      0.0454,
-      0.0391
-    ]
+      0.5753,
+      0.2522,
+      0.1725
+    ],
+    "optimization_success": true,
+    "optimization_nit": 1,
+    "optimization_nfev": 20,
+    "optimization_message": "Optimization terminated successfully."
   }
 }
