@@ -196,14 +196,14 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 
 多步预测输出：
 
-- `models/multistep_source_h{1,6,12,24}.pt`
-- `data/multistep_step1_comparison.csv`
+- `models/multistep_source_h{1,3,6}.pt`
+- `data/multistep_overall_metrics.csv`
 - `data/multistep_per_step_results.csv`
-- `data/figures/多步预测_逐步衰减.png`
+- `data/figures/逐步误差变化_H{3,6}.png`
 
-`multistep_comparison.ipynb` 只保留两种结果策略：`目标域训练（Target-only）` 和 `全层微调（Full fine-tuning）`。源域训练只用于为全层微调提供初始权重，不作为结果策略展示。该 notebook 按当前 `HORIZON` 在循环内构造序列和 `torch_datasets`，各训练步骤内部自行构造 `DataLoader`、`EarlyStopping` 和学习率调度器。
+`multistep_comparison.ipynb` 只保留两种结果策略：`目标域训练（Target-only）` 和 `全层微调（Full fine-tuning）`。源域训练只用于为全层微调提供初始权重，不作为结果策略展示。该 notebook 按当前 `HORIZON` 在循环内构造序列和 `torch_datasets`，各训练步骤内部自行构造 `DataLoader`、`EarlyStopping` 和学习率调度器。多步实验复用 `transfer_learning_lstm_grid_search_results.csv` 中按目标域验证集选出的 `hidden_size` 和 `num_layers`，并保持源域训练、目标域训练、全层微调三个同名阶段的优化器、学习率、权重衰减、调度器和早停设置与 `transfer_learning.ipynb` 一致。训练过程中复用公共可视化函数在 notebook 输出区展示 loss 曲线和预测结果图，不保存这些训练过程图。多步实验只保存所有预测步合并计算的整体指标表，不输出整体指标对比图；`H=1` 的结果保留在表格和 CSV 中但不输出逐步误差图，`H=3/6` 按 `HORIZON` 分别输出独立图片，每张图只比较同一 `HORIZON` 下的目标域训练和全层微调，不再单独保存最近一步精度对比表。
 
-主要保存图表位于 `data/figures/`，包括相似性分析图、迁移学习训练/预测图、迁移学习指标对比图和多步预测逐步衰减图。`visualization.ipynb` 中的负荷曲线和特征相关性分析主要在 notebook 内展示；除迁移学习指标对比图外不另存。具体文件以各 notebook 的保存路径为准。
+主要保存图表位于 `data/figures/`，包括相似性分析图、迁移学习训练/预测图、迁移学习指标对比图和多步预测逐步误差变化图。`visualization.ipynb` 中的负荷曲线和特征相关性分析主要在 notebook 内展示；除迁移学习指标对比图外不另存。具体文件以各 notebook 的保存路径为准。
 
 ## 维护约定
 
