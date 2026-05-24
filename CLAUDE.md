@@ -32,7 +32,7 @@ data_preprocess.ipynb
 | `data_preprocess.ipynb` | 处理原始建筑负荷、天气和日历数据，生成各建筑特征文件                         |
 | `similarity_analysis.ipynb` | 对建筑负荷模式做 VMD-DTW 相似性排序，辅助选择源域/目标域组合                |
 | `prepare_transfer_data.ipynb` | 根据 `src/config.py` 中的源域/目标域配置，生成标准化迁移学习数据          |
-| `transfer_learning.ipynb` | 先用目标域验证集网格搜索 LSTM 结构参数，再训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出多 seed 明细、均值汇总与配对检验结果  |
+| `transfer_learning.ipynb` | 先用目标域验证集网格搜索 LSTM 结构参数，再训练源域模型，运行源域直测、目标域训练和三种迁移学习策略，并输出多 seed 明细、均值汇总与置信区间统计结果  |
 | `multistep_comparison.ipynb` | 迁移学习后的多步预测对比环节，验证不同 `HORIZON` 下目标域训练与全层微调的多步预测表现 |
 | `visualization.ipynb` | 汇总生成负荷曲线、相关性分析和迁移学习结果图                             |
 
@@ -148,11 +148,16 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 - `predict()`
 - `evaluate()`：返回 `MAE`、`RMSE`、`CV-RMSE`、`MAPE`、`R2`
 
+公共可视化工具在 `src/visualization.py`：
+
+- `plot_training_history()` / `plot_predictions()`：用于单次训练过程的 loss 曲线和预测结果展示，可通过 `save_path` 控制是否保存。
+- `plot_multiseed_prediction_curves()` / `plot_multiseed_loss_curves()`：用于 `transfer_learning.ipynb` 的多 seed 汇总曲线，按策略或训练阶段分别保存图片，并可通过 `show=True` 在 notebook 输出区同步展示。
+
 序列构造由 `src/preprocessing.py:create_sequences()` 完成，要求时间戳逐小时连续；输出形状为 `X=(N, lookback, feature_count)`，`y=(N, horizon)`。`transfer_learning.ipynb` 的数据流保持为：DataFrame → `create_sequences()` 生成 ndarray → `LoadDataset` 包装为 `torch_datasets`；各策略函数内部按需构造 `DataLoader`。
 
 完整训练循环保留在 notebook 中，不下沉到 `src/`。`src/` 只保留可复用的模型、数据集、指标和单 epoch 训练/验证函数。
 
-`transfer_learning.ipynb` 中多 seed 执行编排直接写在 `[*REPEAT_SEEDS, SEED]` 循环体中；多 seed 均值汇总和相对 `目标域训练` 的配对统计检验直接写在“实验结果汇总”代码单元中。除 `mean_ci()` 这类会重复使用的小型统计辅助函数外，不为只调用一次的执行编排或汇总逻辑额外定义函数。
+`transfer_learning.ipynb` 中多 seed 执行编排直接写在 `[*REPEAT_SEEDS, SEED]` 循环体中；多 seed 均值汇总和策略-指标粒度的置信区间统计直接写在“实验结果汇总”代码单元中。不再输出相对 `目标域训练` 的配对检验或 Wilcoxon 相关结果，因为当前 seed 数量较少，该统计结论缺乏足够解释力。除 `mean_ci()` 这类会重复使用的小型统计辅助函数外，不为只调用一次的执行编排或汇总逻辑额外定义函数。
 
 `transfer_learning.ipynb` 在正式多 seed 迁移学习实验前，先以目标域验证集 `MAE` 最小为目标，对 `hidden_size=[64, 128, 256]` 和 `num_layers=[1, 2]` 做网格搜索。测试集不参与参数选择。搜索得到的 `HIDDEN_SIZE` 和 `NUM_LAYERS` 被后续所有策略统一复用，保证策略比较不受模型结构差异影响。
 
@@ -173,7 +178,7 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 - `ReduceLROnPlateau(factor=0.5, patience=4)`
 - 多 seed：实际执行顺序直接使用 `[*REPEAT_SEEDS, SEED]` 一起参与统计汇总
 
-每个 seed 运行都会保存模型和图表；由于保存路径固定，后执行的 seed 会覆盖同名模型和图表。`SEED` 排在执行列表最后，仅用于固定同名模型和预测图的最终保存版本；定量比较以所有 seed 的平均结果、置信区间和配对检验为主要依据。
+每个 seed 运行都会按固定路径保存模型；由于保存路径固定，后执行的 seed 会覆盖同名模型。`SEED` 排在执行列表最后，仅用于固定同名模型的最终保存版本；定量比较以所有 seed 的平均结果、标准差和置信区间为主要依据。训练和预测曲线不再按单个 seed 单独输出，而是在所有 seed 结束后统一汇总绘制。
 
 ## 结果文件
 
@@ -188,11 +193,10 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 - `data/transfer_learning_strategy_mean_metrics.csv`
 - `data/transfer_learning_per_seed_metrics.csv`
 - `data/transfer_learning_strategy_metric_stats.csv`
-- `data/transfer_learning_paired_tests_vs_target.csv`
 
 `transfer_learning_strategy_mean_metrics.csv` 由 `transfer_learning.ipynb` 生成，保存各策略在所有 seed 上的平均 `MAE`、`RMSE`、`CV-RMSE`、`MAPE` 和 `R2`，供后续可视化和论文结果表使用。
 
-迁移学习训练与预测图使用中文文件名保存，包括 `源域预训练_损失曲线.png`、`源域直测_预测对比.png`、`目标域训练_损失曲线.png`、`目标域训练_预测对比.png`、`全层微调_损失曲线.png`、`全层微调_预测对比.png`、`固定时序表征微调_损失曲线.png`、`固定时序表征微调_预测对比.png`、`固定特征回归_损失曲线.png` 和 `固定特征回归_预测对比.png`。
+迁移学习训练与预测图使用中文文件名保存，包括 `源域预训练_损失曲线.png`、`源域直测_预测对比.png`、`目标域训练_损失曲线.png`、`目标域训练_预测对比.png`、`全层微调_损失曲线.png`、`全层微调_预测对比.png`、`固定时序表征微调_损失曲线.png`、`固定时序表征微调_预测对比.png`、`固定特征回归_损失曲线.png` 和 `固定特征回归_预测对比.png`。`transfer_learning.ipynb` 不再为每个 seed 单独输出曲线；运行前会清理旧曲线图，所有 seed 结束后按策略分别保存多 seed 汇总预测图，按阶段分别保存多 seed 汇总 loss 图，并在 notebook 输出区同步展示这些最终图片。预测图图例只区分真实值和预测值，各 seed 的预测曲线使用相同颜色；loss 图图例只区分训练损失和验证损失，不按 seed 单独设置图例。
 
 多步预测输出：
 
@@ -203,7 +207,17 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 
 `multistep_comparison.ipynb` 只保留两种结果策略：`目标域训练（Target-only）` 和 `全层微调（Full fine-tuning）`。源域训练只用于为全层微调提供初始权重，不作为结果策略展示。该 notebook 按当前 `HORIZON` 在循环内构造序列和 `torch_datasets`，各训练步骤内部自行构造 `DataLoader`、`EarlyStopping` 和学习率调度器。多步实验复用 `transfer_learning_lstm_grid_search_results.csv` 中按目标域验证集选出的 `hidden_size` 和 `num_layers`，并保持源域训练、目标域训练、全层微调三个同名阶段的优化器、学习率、权重衰减、调度器和早停设置与 `transfer_learning.ipynb` 一致。训练过程中复用公共可视化函数在 notebook 输出区展示 loss 曲线和预测结果图，不保存这些训练过程图。多步实验只保存所有预测步合并计算的整体指标表，不输出整体指标对比图；`H=1` 的结果保留在表格和 CSV 中但不输出逐步误差图，`H=3/6` 按 `HORIZON` 分别输出独立图片，每张图只比较同一 `HORIZON` 下的目标域训练和全层微调，不再单独保存最近一步精度对比表。
 
-主要保存图表位于 `data/figures/`，包括相似性分析图、迁移学习训练/预测图、迁移学习指标对比图和多步预测逐步误差变化图。`visualization.ipynb` 中的负荷曲线和特征相关性分析主要在 notebook 内展示；除迁移学习指标对比图外不另存。具体文件以各 notebook 的保存路径为准。
+主要保存图表位于 `data/figures/`，包括相似性分析图、迁移学习训练/预测图、迁移学习指标对比图、多步预测逐步误差变化图和源域/目标域 Pearson 相关矩阵图。`visualization.ipynb` 中的负荷曲线主要在 notebook 内展示；特征相关性分析会先删除现有 `*_Pearson相关矩阵.png`，再按当前源域和目标域保存 Pearson 相关矩阵图，迁移学习结果按指标分别保存对比图。具体文件以各 notebook 的保存路径为准。
+
+## 论文写作约定
+
+- 论文正文和论文说明文档中，非必要不使用“建模”一词，优先改写为“模型构建”。只有在固定术语、文献原文或语义确实指向建模过程且替换会造成表达不准确时，才保留“建模”。
+- 论文写作应符合学士论文的语言要求和文体风格，保持逻辑严谨、科学客观、表述克制。不得夸大实验结论，不得虚构未运行的实验、未验证的数据结果或未核实的文献依据。
+- 论文正文不要随意自定义概念或创造新术语。对源域、目标域、基线、微调、参数更新、冻结、特征提取器等已有通用含义的术语，直接按学术界常用语义使用；避免写“本文所称……”“本文将……定义为/限定为……”这类概念声明，除非该术语确实是本文新提出且必须界定。
+- 学士论文的方法章节应以实验对象、策略名称、方法作用、优劣分析和潜在问题为主，不拔高为理论概念辨析。介绍迁移策略时，先明确策略名称，再解释训练方式、相对基线、优势、局限和可能训练风险。
+- 迁移学习实验中应强调基线关系：`目标域训练` 是判断迁移收益的主要基线，`源域直测` 用于观察无目标域适配时的直接跨域泛化能力。若迁移策略仅优于源域直测但不优于目标域训练，不能据此说明迁移学习相较目标域独立训练具有额外收益。
+- 区分常用术语但不要另行造概念：`微调` 用于描述加载预训练权重后继续在目标域样本上训练；`参数更新` 用于说明训练过程中哪些层参与优化；`目标域训练` 是从随机初始化开始的独立训练，不写成微调。
+- 论文正文只关注研究原理、方法思路、实验设计、结果解释和问题解决方案，不写具体代码实现、工程操作过程、文件名、函数名、变量名或 notebook 名。正文叙述中不解释图片或结果由哪个文件、路径或代码生成；但 Markdown 图片引用可以保留相对路径，以便本地预览和后续排版。
 
 ## 维护约定
 

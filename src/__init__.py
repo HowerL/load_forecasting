@@ -28,6 +28,8 @@ from .visualization import (
     setup_plot_style,
     plot_training_history,
     plot_predictions,
+    plot_multiseed_prediction_curves,
+    plot_multiseed_loss_curves,
 )
 
 from .split_standardize import (
@@ -80,6 +82,8 @@ __all__ = [
     'setup_plot_style',
     'plot_training_history',
     'plot_predictions',
+    'plot_multiseed_prediction_curves',
+    'plot_multiseed_loss_curves',
     # split_standardize
     'prepare_source_domain',
     'prepare_target_domain',
