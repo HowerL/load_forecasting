@@ -151,7 +151,7 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 公共可视化工具在 `src/visualization.py`：
 
 - `plot_training_history()` / `plot_predictions()`：用于单次训练过程的 loss 曲线和预测结果展示，可通过 `save_path` 控制是否保存。
-- `plot_multiseed_prediction_curves()` / `plot_multiseed_loss_curves()`：用于 `transfer_learning.ipynb` 的多 seed 汇总曲线，按策略或训练阶段分别保存图片，并可通过 `show=True` 在 notebook 输出区同步展示。
+- `plot_multiseed_prediction_curves()`：用于 `transfer_learning.ipynb` 的多 seed 预测结果汇总曲线，按策略分别保存图片，并可通过 `show=True` 在 notebook 输出区同步展示。
 
 序列构造由 `src/preprocessing.py:create_sequences()` 完成，要求时间戳逐小时连续；输出形状为 `X=(N, lookback, feature_count)`，`y=(N, horizon)`。`transfer_learning.ipynb` 的数据流保持为：DataFrame → `create_sequences()` 生成 ndarray → `LoadDataset` 包装为 `torch_datasets`；各策略函数内部按需构造 `DataLoader`。
 
@@ -196,7 +196,7 @@ PIR = (target_train_MAE - transfer_MAE) / target_train_MAE * 100
 
 `transfer_learning_strategy_mean_metrics.csv` 由 `transfer_learning.ipynb` 生成，保存各策略在所有 seed 上的平均 `MAE`、`RMSE`、`CV-RMSE`、`MAPE` 和 `R2`，供后续可视化和论文结果表使用。
 
-迁移学习训练与预测图使用中文文件名保存，包括 `源域预训练_损失曲线.png`、`源域直测_预测对比.png`、`目标域训练_损失曲线.png`、`目标域训练_预测对比.png`、`全层微调_损失曲线.png`、`全层微调_预测对比.png`、`固定时序表征微调_损失曲线.png`、`固定时序表征微调_预测对比.png`、`固定特征回归_损失曲线.png` 和 `固定特征回归_预测对比.png`。`transfer_learning.ipynb` 不再为每个 seed 单独输出曲线；运行前会清理旧曲线图，所有 seed 结束后按策略分别保存多 seed 汇总预测图，按阶段分别保存多 seed 汇总 loss 图，并在 notebook 输出区同步展示这些最终图片。预测图图例只区分真实值和预测值，各 seed 的预测曲线使用相同颜色；loss 图图例只区分训练损失和验证损失，不按 seed 单独设置图例。
+迁移学习训练与预测图使用中文文件名保存，包括 `源域预训练_损失曲线.png`、`源域直测_预测对比.png`、`目标域训练_损失曲线.png`、`目标域训练_预测对比.png`、`全层微调_损失曲线.png`、`全层微调_预测对比.png`、`固定时序表征微调_损失曲线.png`、`固定时序表征微调_预测对比.png`、`固定特征回归_损失曲线.png` 和 `固定特征回归_预测对比.png`。`transfer_learning.ipynb` 不再为每个 seed 单独输出曲线；所有 seed 结束后按策略分别保存多 seed 汇总预测图，并在 notebook 输出区同步展示这些预测图。loss 图不再做多 seed 汇总，而是直接使用配置中的 `SEED`，调用 `plot_training_history()` 按阶段保存单次训练损失曲线。预测图图例只区分真实值和预测值，各 seed 的预测曲线使用相同颜色；loss 图图例只区分训练损失和验证损失。
 
 多步预测输出：
 

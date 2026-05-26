@@ -18,19 +18,19 @@ def plot_training_history(train_losses: list, val_losses: list, title: str = 'Tr
     """绘制训练和验证损失曲线"""
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.grid(True, alpha=0.3)
-    ax.plot(train_losses, label='Train MAE', color='tab:blue')
-    ax.plot(val_losses, label='Val MAE', color='tab:orange')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('MAE')
-    ax.set_title(title)
-    ax.legend(facecolor='white', edgecolor='black', labelcolor='black')
+    ax.plot(train_losses, label='训练损失', color='tab:blue')
+    ax.plot(val_losses, label='验证损失', color='tab:orange')
+    ax.set_xlabel('Epoch', fontsize=14)
+    ax.set_ylabel('MAE', fontsize=14)
+    ax.tick_params(axis='both', labelsize=12)
+    ax.legend(facecolor='white', edgecolor='black', labelcolor='black', fontsize=12)
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.show()
 
 
-def plot_predictions(y_true: np.ndarray, y_pred: np.ndarray, title: str, scaler=None, save_path: str = None):
+def plot_predictions(y_true: np.ndarray, y_pred: np.ndarray, title: str = None, scaler=None, save_path: str = None):
     """绘制预测结果对比图"""
     if scaler is not None:
         y_true = scaler.inverse_transform(y_true.reshape(-1, 1)).reshape(y_true.shape)
@@ -43,10 +43,10 @@ def plot_predictions(y_true: np.ndarray, y_pred: np.ndarray, title: str, scaler=
     ax.grid(True, alpha=0.3)
     ax.plot(y_true, label='Real', color='tab:blue')
     ax.plot(y_pred, label='Predict', color='tab:orange')
-    ax.set_xlabel('Sample')
-    ax.set_ylabel('kWh' if scaler is not None else '标准差')
-    ax.set_title(title)
-    ax.legend(facecolor='white', edgecolor='black', labelcolor='black')
+    ax.set_xlabel('Sample', fontsize=14)
+    ax.set_ylabel('kWh' if scaler is not None else '标准差', fontsize=14)
+    ax.tick_params(axis='both', labelsize=12)
+    ax.legend(facecolor='white', edgecolor='black', labelcolor='black', fontsize=12)
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
@@ -90,58 +90,13 @@ def plot_multiseed_prediction_curves(records: list, output_dir, strategies: list
                 alpha=0.55,
             )
 
-        ax.set_title(strategy)
-        ax.set_xlabel('Sample')
-        ax.set_ylabel('kWh')
+        ax.set_xlabel('Sample', fontsize=14)
+        ax.set_ylabel('kWh', fontsize=14)
+        ax.tick_params(axis='both', labelsize=12)
         ax.grid(True, alpha=0.3)
-        ax.legend(facecolor='white', edgecolor='black', labelcolor='black')
+        ax.legend(facecolor='white', edgecolor='black', labelcolor='black', fontsize=12)
         fig.tight_layout()
         fig.savefig(output_dir / f'{strategy}_预测对比.png', dpi=300, bbox_inches='tight')
-        if show:
-            plt.show()
-        else:
-            plt.close(fig)
-
-
-def plot_multiseed_loss_curves(records: list, output_dir, stages: list = None, show: bool = False) -> None:
-    """按训练阶段分别保存多 seed 损失曲线。"""
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    stage_order = stages if stages is not None else _record_order(records, '阶段')
-
-    for stage in stage_order:
-        stage_records = [record for record in records if record['阶段'] == stage]
-        if not stage_records:
-            continue
-
-        fig, ax = plt.subplots(figsize=(10, 4))
-        for idx, record in enumerate(stage_records):
-            train_epochs = np.arange(1, len(record['train_losses']) + 1)
-            val_epochs = np.arange(1, len(record['val_losses']) + 1)
-            ax.plot(
-                train_epochs,
-                record['train_losses'],
-                label='训练损失' if idx == 0 else '_nolegend_',
-                color='tab:blue',
-                linewidth=1.1,
-                alpha=0.55,
-            )
-            ax.plot(
-                val_epochs,
-                record['val_losses'],
-                label='验证损失' if idx == 0 else '_nolegend_',
-                color='tab:orange',
-                linewidth=1.1,
-                alpha=0.55,
-            )
-
-        ax.set_title(stage)
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('MAE')
-        ax.grid(True, alpha=0.3)
-        ax.legend(facecolor='white', edgecolor='black', labelcolor='black')
-        fig.tight_layout()
-        fig.savefig(output_dir / f'{stage}_损失曲线.png', dpi=300, bbox_inches='tight')
         if show:
             plt.show()
         else:
